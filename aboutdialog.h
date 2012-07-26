@@ -25,6 +25,9 @@ namespace Ui {
 class AboutDialog;
 }
 
+/**
+ * @brief Shows the about dialog box
+ */
 class AboutDialog : public QDialog
 {
     Q_OBJECT
