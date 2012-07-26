@@ -22,6 +22,10 @@
 #include <QFileDialog>
 #include <QDir>
 #include <QDebug>
+#include <QMimeData>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QUrl>
 
 #include "aboutdialog.h"
 #include "imageprocessor.h"
@@ -38,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(handleEqualize()));
     connect(ui->actionStart_Over,SIGNAL(triggered()),
             this,SLOT(handleStartOver()));
+
 }
 
 MainWindow::~MainWindow()
@@ -45,11 +50,33 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+    if (event->mimeData()->hasUrls()) {
+        foreach (QUrl url, event->mimeData()->urls()) {
+            if(url.path().endsWith(".png",Qt::CaseInsensitive) ||
+                    url.path().endsWith(".jpg",Qt::CaseInsensitive) ||
+                    url.path().endsWith(".jpeg",Qt::CaseInsensitive) ||
+                    url.path().endsWith(".bmp",Qt::CaseInsensitive))
+            event->acceptProposedAction();
+        }
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event) {
+    m_original.load(event->mimeData()->urls().at(0).path());
+    m_current = m_original;
+
+    ui->radioImageWidget->setImage(m_original);
+    ui->histoWidget->setProcessImage(m_original);
+
+    this->setWindowFilePath(event->mimeData()->urls().at(0).path());
+}
+
 void MainWindow::openImage() {
 
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open Image"),
                                                     QDir::homePath(),
-                                                    tr("Image Files (*.png *.jpg *.bmp)"));
+                                                    tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
     m_original.load(fileName);
     m_current = m_original;
 
