@@ -30,6 +30,13 @@ HistoWidget::HistoWidget(QWidget *parent) :
     setMouseTracking(true);
 }
 
+/**
+ * @brief HistoWidget::setProcessImage
+ * Sets the image that the hisogram will be based on
+ *
+ * @param img
+ * The image that the histogram should be based on
+ */
 void HistoWidget::setProcessImage(QImage img) {
     m_Occ = ImageProcessor::findOccurrences(img);
 
@@ -44,10 +51,13 @@ void HistoWidget::setProcessImage(QImage img) {
         m_Occ.replace(i,m_Occ.value(i) * multi);
     }
 
-
     this->repaint();
 }
 
+/**
+ * @brief HistoWidget::paintEvent
+ * Overloading the paint event to draw the histogram
+ */
 void HistoWidget::paintEvent(QPaintEvent *) {
     QPainter p(this);
     p.setPen(QColor(70,70,40));
@@ -60,6 +70,11 @@ void HistoWidget::paintEvent(QPaintEvent *) {
 
 }
 
+/**
+ * @brief HistoWidget::mouseMoveEvent
+ * Update the tool tip to show the pixel value for the histogram
+ * @param event
+ */
 void HistoWidget::mouseMoveEvent(QMouseEvent *event) {
     this->setToolTip(QString::number(event->x()));
 }

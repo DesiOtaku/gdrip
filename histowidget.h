@@ -23,6 +23,10 @@
 #include <QImage>
 #include <QVector>
 
+/**
+ * @brief The HistoWidget class
+ * Creates a histogram of pixel values of the current image
+ */
 class HistoWidget : public QWidget
 {
     Q_OBJECT

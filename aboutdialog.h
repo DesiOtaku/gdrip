@@ -26,7 +26,8 @@ class AboutDialog;
 }
 
 /**
- * @brief Shows the about dialog box
+ * @brief The AboutDialog class
+ * Shows the about dialog box
  */
 class AboutDialog : public QDialog
 {

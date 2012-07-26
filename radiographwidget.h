@@ -28,6 +28,10 @@ namespace Ui {
 class RadiographWidget;
 }
 
+/**
+ * @brief The RadiographWidget class
+ * Displays the current radiograph the user is working on
+ */
 class RadiographWidget : public QGraphicsView
 {
     Q_OBJECT

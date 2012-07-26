@@ -23,6 +23,10 @@
 #include <QImage>
 #include <QPainter>
 
+/**
+ * @brief The ImageProcessor class
+ * A singleton class that does a lot of the actual image processing
+ */
 class ImageProcessor : public QObject
 {
     Q_OBJECT
