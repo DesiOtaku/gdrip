@@ -42,6 +42,10 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(handleEqualize()));
     connect(ui->actionStart_Over,SIGNAL(triggered()),
             this,SLOT(handleStartOver()));
+    connect(ui->actionDraw_Occulsion,SIGNAL(triggered()),
+            this,SLOT(handleDrawOcc()));
+
+    this->statusBar()->showMessage(tr("Ready"),3000);
 
 }
 
@@ -63,20 +67,10 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void MainWindow::dropEvent(QDropEvent *event) {
-    m_original.load(event->mimeData()->urls().at(0).path());
-    m_current = m_original;
-
-    ui->radioImageWidget->setImage(m_original);
-    ui->histoWidget->setProcessImage(m_original);
-
-    this->setWindowFilePath(event->mimeData()->urls().at(0).path());
+    openImage(event->mimeData()->urls().at(0).path());
 }
 
-void MainWindow::openImage() {
-
-    QString fileName = QFileDialog::getOpenFileName(this,tr("Open Image"),
-                                                    QDir::homePath(),
-                                                    tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
+void MainWindow::openImage(QString fileName) {
     m_original.load(fileName);
     m_current = m_original;
 
@@ -84,6 +78,18 @@ void MainWindow::openImage() {
     ui->histoWidget->setProcessImage(m_original);
 
     this->setWindowFilePath(fileName);
+
+    this->statusBar()->showMessage(tr("Image \"%1\" has been opened").arg(fileName),3000);
+}
+
+void MainWindow::openImage() {
+
+    QString fileName = QFileDialog::getOpenFileName(this,tr("Open Image"),
+                                                    QDir::homePath(),
+                                                    tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
+    if(QFile::exists(fileName)) {
+        openImage(fileName);
+    }
 }
 
 void MainWindow::showAbout() {
@@ -95,10 +101,19 @@ void MainWindow::handleEqualize() {
     m_current = ImageProcessor::equalizeHistogram(m_current);
     ui->radioImageWidget->setImage(m_current);
     ui->histoWidget->setProcessImage(m_current);
+    this->statusBar()->showMessage(tr("Done with histogram equalization"),3000);
 }
 
 void MainWindow::handleStartOver() {
     m_current = m_original;
     ui->radioImageWidget->setImage(m_original);
     ui->histoWidget->setProcessImage(m_original);
+    this->statusBar()->showMessage(tr("Started over"),3000);
+}
+
+void MainWindow::handleDrawOcc() {
+    m_current = ImageProcessor::drawOcculsion(m_current);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+    this->statusBar()->showMessage(tr("Done finding occlusion"),3000);
 }

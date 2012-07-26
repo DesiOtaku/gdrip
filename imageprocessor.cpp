@@ -165,12 +165,12 @@ QVector<int> ImageProcessor::findOcculsion(QImage input) {
     process.setValue(input.width()*input.height());
 
     QVector<int> returnMe;
-    returnMe.append(p0x);
-    returnMe.append(p0y);
-    returnMe.append(bestBezX);
-    returnMe.append(bestBezY);
-    returnMe.append(p2x);
-    returnMe.append(p2y);
+    returnMe.append(p0x); //0
+    returnMe.append(p0y);//1
+    returnMe.append(bestBezX);//2
+    returnMe.append(bestBezY);//3
+    returnMe.append(p2x);//4
+    returnMe.append(p2y);//5
 
     return returnMe;
 }
@@ -192,6 +192,23 @@ void ImageProcessor::drawBezier(int p0x, int p0y, int p2x,
         //img.setPixel((int)x,(int)y,qRgb(0,255,0));
     }
 
+}
+
+QImage ImageProcessor::drawOcculsion(QImage input) {
+    QVector<int> occ = ImageProcessor::findOcculsion(input);
+    QImage returnMe(input);
+    returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
+    QPainter p(&returnMe);
+    ImageProcessor::drawBezier(
+                occ.at(0),
+                occ.at(1),
+                occ.at(4),
+                occ.at(5),
+                occ.at(2),
+                occ.at(3),
+                &p
+                );
+    return returnMe;
 }
 
 int ImageProcessor::computeBezierSum(int p0x, int p0y, int p2x,

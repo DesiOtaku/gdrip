@@ -32,6 +32,7 @@ public:
     static QImage equalizeHistogram(QImage input);
     static QImage thresholdImage(QImage input, int cutoff);
     static QVector<int> findOcculsion(QImage input);
+    static QImage drawOcculsion(QImage input);
     static QVector<float> findOccurrences(QImage input);
 
     static void drawBezier(int p0x,int p0y,int p2x,int p2y,int p1x,int p1y, QPainter *img);

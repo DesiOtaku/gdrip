@@ -39,11 +39,13 @@ protected:
     void dropEvent(QDropEvent *event);
 
 public slots:
+    void openImage(QString fileName);
     void openImage();
     void showAbout();
 
     void handleEqualize();
     void handleStartOver();
+    void handleDrawOcc();
     
 private:
     Ui::MainWindow *ui;

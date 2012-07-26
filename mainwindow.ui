@@ -53,6 +53,7 @@
     <addaction name="actionStart_Over"/>
     <addaction name="separator"/>
     <addaction name="actionEqualize_Histogram"/>
+    <addaction name="actionDraw_Occulsion"/>
     <addaction name="actionFind_Background"/>
     <addaction name="actionFind_Teeth"/>
    </widget>
@@ -272,6 +273,11 @@
   <action name="actionFind_Teeth">
    <property name="text">
     <string>Find Teeth</string>
+   </property>
+  </action>
+  <action name="actionDraw_Occulsion">
+   <property name="text">
+    <string>Draw Occulsion</string>
    </property>
   </action>
  </widget>

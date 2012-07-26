@@ -18,6 +18,7 @@
 
 #include "mainwindow.h"
 #include <QApplication>
+#include <QFile>
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +26,11 @@ int main(int argc, char *argv[])
     a.setApplicationName("GNU Dental Radiograph Image Program");
     MainWindow w;
     w.show();
+
+    QStringList args = QCoreApplication::arguments();
+    if( (args.length() > 1) &&  QFile::exists(args.at(1))  ) {
+        w.openImage(args.at(1));
+    }
     
     return a.exec();
 }
