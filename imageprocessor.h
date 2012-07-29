@@ -40,6 +40,7 @@ public:
     static QVector<float> findOccurrences(QImage input);
 
     static void drawBezier(int p0x,int p0y,int p2x,int p2y,int p1x,int p1y, QPainter *img);
+    static QImage findBackground(QImage input);
     
 private:
     static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,

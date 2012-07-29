@@ -50,6 +50,9 @@ public slots:
     void handleEqualize();
     void handleStartOver();
     void handleDrawOcc();
+    void handleFindBack();
+    void handleSaveImage();
+
     
 private:
     Ui::MainWindow *ui;

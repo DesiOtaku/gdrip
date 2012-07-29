@@ -17,6 +17,9 @@
  *********************************************************************/
 
 #include <QProgressDialog>
+#include <QDebug>
+
+#include "math.h"
 
 #include "imageprocessor.h"
 
@@ -87,7 +90,7 @@ QImage ImageProcessor::thresholdImage(QImage input, int cutoff) {
         for(int y=0;y<input.height();y++) {
             int val = qRed(input.pixel(x,y));
             if(val > cutoff) {
-                returnMe.setPixel(x,y,qRgb(255,255,255));
+                returnMe.setPixel(x,y,255);
             } else {
                 returnMe.setPixel(x,y,0);
             }
@@ -98,17 +101,16 @@ QImage ImageProcessor::thresholdImage(QImage input, int cutoff) {
 }
 
 QVector<int> ImageProcessor::findOcculsion(QImage input) {
-    int square = (int) (.07 * input.height());
+    int radius = (int) (.15 * input.height());
+    //qDebug()<<"radius: " <<radius;
 
     //left side
     int bestLeftY=0;
-    int bestLeftYval=square*square*255;
-    for(int currentY=0;currentY<input.height()-square;currentY++) {
-        int sum=0;
-        for(int x=0;x<square;x++) {
-            for(int y=currentY;y<currentY+square;y++) {
-                sum += qRed(input.pixel(x,y));
-            }
+    int bestLeftYval=INT_MAX;
+    for(int currentY=radius;currentY<input.height()-radius;currentY++) {
+        int sum =0;
+        foreach(int x,ImageProcessor::regionVals(0,currentY,radius,input)) {
+            sum+=x;
         }
 
         if(sum < bestLeftYval) {
@@ -116,42 +118,44 @@ QVector<int> ImageProcessor::findOcculsion(QImage input) {
             bestLeftYval = sum;
         }
     }
+
+    //QPainter painter(&input);
     //painter.fillRect(0,bestLeftY,square,square,QColor(255,0,0));
 
     //right side
     int bestRightY=0;
-    int bestRightYval=square*square*255;
-    for(int currentY=0;currentY<input.height()-square;currentY++) {
-        int sum=0;
-        for(int x=input.width()-1;x>input.width()-1-square;x--) {
-            for(int y=currentY;y<currentY+square;y++) {
-                sum += qRed(input.pixel(x,y));
-            }
+    int bestRightYval=INT_MAX;
+    for(int currentY=radius;currentY<input.height()-radius;currentY++) {
+        int sum =0;
+        foreach(int x,ImageProcessor::regionVals(input.width()-1,currentY,radius,input)) {
+            sum+=x;
         }
+        //qDebug()<<"Sum was: " <<sum;
 
         if(sum < bestRightYval) {
             bestRightY = currentY;
             bestRightYval = sum;
         }
     }
-    //painter.fillRect(img.width()-1-square,bestRightY,square,square,QColor(255,0,0));
+    //painter.fillRect(input.width()-1-square,bestRightY,square,square,QColor(255,0,0));
 
     //now for the ugly part: making the (Quadratic) bezier curve
 
     int p0x = 0;
-    int p0y = bestLeftY + (square/2);
+    int p0y = bestLeftY;
 
     int p2x = input.width() -1;
-    int p2y = bestRightY + (square/2);
+    int p2y = bestRightY;
 
     int bestBezX=0;
     int bestBezY=0;
     int bestBezVal = INT_MAX;
-    QProgressDialog process("Calculating different bezier curves....",
+    QProgressDialog process(tr("Calculating different bezier curves...."),
                             QString(),0,input.width()*input.height());
+    process.setWindowTitle(tr("Calculating curves"));
     process.setWindowModality(Qt::WindowModal);
-    for(int x=square;x<input.width() -square;x++) {
-        for(int y=square;y<input.height() -square;y++) {
+    for(int x=0;x<input.width();x++) {
+        for(int y=0;y<input.height();y++) {
             int val = ImageProcessor::computeBezierSum(
                         p0x,p0y,p2x,p2y,x,y,bestBezVal,input);
             if(val < bestBezVal) {
@@ -191,6 +195,11 @@ void ImageProcessor::drawBezier(int p0x, int p0y, int p2x,
         img->fillRect((int)x,(int)y,1,1,QColor(0,255,0));
         //img.setPixel((int)x,(int)y,qRgb(0,255,0));
     }
+
+//    qDebug()<<"p0x: " << p0x;
+//    qDebug()<<"p0y: " << p0y;
+//    qDebug()<<"p2x: " << p2x;
+//    qDebug()<<"p2y: " << p2y;
 
 }
 
@@ -263,12 +272,49 @@ QVector<int> ImageProcessor::regionVals(int startX, int startY, int r, QImage im
     for(int x= startX - r; x < (startX + r); x++) {
         for(int y = startY-r; y< (startY+r); y++) {
             if(img.valid(x,y)) {
+                //int val = qRed(img.pixel(x,y));
+                //vals.append(val*val*val);
                 vals.append(qRed(img.pixel(x,y)));
             }
         }
     }
 
     return vals;
+}
+
+QImage ImageProcessor::findBackground(QImage input) {
+    QImage returnMe = equalizeHistogram(input);
+    QVector<int> occ = ImageProcessor::findOcculsion(returnMe);
+
+    //returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
+    //QPainter p(&returnMe);
+
+    QVector<int> regVals = ImageProcessor::regValsBezier(
+                occ.at(0),
+                occ.at(1),
+                occ.at(4),
+                occ.at(5),
+                occ.at(2),
+                occ.at(3),
+                3,
+                returnMe
+                );
+
+    int sum=0;
+    foreach(int i ,regVals) {
+        sum+=i;
+    }
+    double average = ((double)sum) /  regVals.count();
+    double variance=0;
+    foreach(int i ,regVals) {
+        int val = i-average;
+        variance+= (val *val);
+    }
+    double standardDev =sqrt(variance / regVals.count());
+    returnMe = ImageProcessor::thresholdImage(returnMe,average + (standardDev*3));
+    returnMe = ImageProcessor::drawOcculsion(returnMe);
+
+    return returnMe;
 }
 
 

@@ -44,6 +44,10 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(handleStartOver()));
     connect(ui->actionDraw_Occulsion,SIGNAL(triggered()),
             this,SLOT(handleDrawOcc()));
+    connect(ui->actionFind_Background,SIGNAL(triggered()),
+            this,SLOT(handleFindBack()));
+    connect(ui->actionSave_Image,SIGNAL(triggered()),
+            this,SLOT(handleSaveImage()));
 
     this->statusBar()->showMessage(tr("Ready"),3000);
 
@@ -116,4 +120,21 @@ void MainWindow::handleDrawOcc() {
     ui->radioImageWidget->setImage(m_current);
     ui->histoWidget->setProcessImage(m_current);
     this->statusBar()->showMessage(tr("Done finding occlusion"),3000);
+}
+
+void MainWindow::handleFindBack() {
+    m_current = ImageProcessor::findBackground(m_current);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+    this->statusBar()->showMessage(tr("Done finding background"),3000);
+}
+
+void MainWindow::handleSaveImage() {
+    QString fileName = QFileDialog::getSaveFileName(this,tr("Save Image"),
+                                                    QDir::homePath() + QDir::separator() + "img.png",
+                                                    tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
+    if(fileName.length() > 0) {
+        m_current.save(fileName);
+    }
+    this->statusBar()->showMessage(tr("Image has been saved to \"%1\"").arg(fileName),3000);
 }
