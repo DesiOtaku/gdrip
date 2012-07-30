@@ -26,6 +26,7 @@
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QUrl>
+#include <QSettings>
 
 #include "aboutdialog.h"
 #include "imageprocessor.h"
@@ -48,6 +49,11 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(handleFindBack()));
     connect(ui->actionSave_Image,SIGNAL(triggered()),
             this,SLOT(handleSaveImage()));
+    connect(ui->actionFind_Teeth,SIGNAL(triggered()),
+            this,SLOT(handleFindTeeth()));
+
+    QSettings settings("Tej A. Shah", "gdrip");
+    restoreState(settings.value("windowState").toByteArray());
 
     this->statusBar()->showMessage(tr("Ready"),3000);
 
@@ -72,6 +78,12 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 
 void MainWindow::dropEvent(QDropEvent *event) {
     openImage(event->mimeData()->urls().at(0).path());
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    QSettings settings("Tej A. Shah", "gdrip");
+    settings.setValue("windowState", saveState());
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::openImage(QString fileName) {
@@ -137,4 +149,11 @@ void MainWindow::handleSaveImage() {
         m_current.save(fileName);
     }
     this->statusBar()->showMessage(tr("Image has been saved to \"%1\"").arg(fileName),3000);
+}
+
+void MainWindow::handleFindTeeth() {
+    m_current = ImageProcessor::findTeeth(m_current);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+    this->statusBar()->showMessage(tr("Done finding teeth"),3000);
 }

@@ -41,6 +41,7 @@ public:
 protected:
     void dragEnterEvent(QDragEnterEvent *event);
     void dropEvent(QDropEvent *event);
+    void closeEvent(QCloseEvent *);
 
 public slots:
     void openImage(QString fileName);
@@ -52,6 +53,7 @@ public slots:
     void handleDrawOcc();
     void handleFindBack();
     void handleSaveImage();
+    void handleFindTeeth();
 
     
 private:

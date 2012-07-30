@@ -101,7 +101,7 @@ QImage ImageProcessor::thresholdImage(QImage input, int cutoff) {
 }
 
 QVector<int> ImageProcessor::findOcculsion(QImage input) {
-    int radius = (int) (.15 * input.height());
+    int radius = (int) (.1 * input.height());
     //qDebug()<<"radius: " <<radius;
 
     //left side
@@ -313,6 +313,65 @@ QImage ImageProcessor::findBackground(QImage input) {
     double standardDev =sqrt(variance / regVals.count());
     returnMe = ImageProcessor::thresholdImage(returnMe,average + (standardDev*3));
     returnMe = ImageProcessor::drawOcculsion(returnMe);
+
+    return returnMe;
+}
+
+void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
+                                     int p2y, int p1x, int p1y, QPainter *input) {
+    input->setPen(QColor(255,0,0));
+
+    float div = .1;
+    for(float t = 0;t<1;t+= div) {
+        float onemt = 1-t;
+
+        float x = (onemt * onemt*p0x) +
+                (2 * onemt * t *p1x) +
+                (t * t *p2x);
+
+        float y = (onemt * onemt*p0y) +
+                (2 * onemt * t *p1y) +
+                (t * t *p2y);
+
+        float slopeX = (2*onemt*(p1x-p0x)) + (2*t*(p2x-p1x));
+        float slopeY = (2*onemt*(p1y-p0y)) + (2*t*(p2y-p1y));
+
+        float negInverse = -5 * slopeX / slopeY;
+
+        QPoint start(x,y);
+        QPoint end(x + 5,y+negInverse);
+
+        input->drawLine(start,end);
+
+    }
+}
+
+QImage ImageProcessor::findTeeth(QImage input) {
+    QImage returnMe = equalizeHistogram(input);
+
+    QVector<int> occ = ImageProcessor::findOcculsion(returnMe);
+    returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
+    QPainter p(&returnMe);
+    ImageProcessor::drawBezier(
+                occ.at(0),
+                occ.at(1),
+                occ.at(4),
+                occ.at(5),
+                occ.at(2),
+                occ.at(3),
+                &p
+                );
+    ImageProcessor::drawBezierDer(
+                occ.at(0),
+                occ.at(1),
+                occ.at(4),
+                occ.at(5),
+                occ.at(2),
+                occ.at(3),
+                &p
+                );
+
+
 
     return returnMe;
 }

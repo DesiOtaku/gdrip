@@ -34,15 +34,19 @@ public:
     explicit ImageProcessor(QObject *parent = 0);
     
     static QImage equalizeHistogram(QImage input);
-    static QImage thresholdImage(QImage input, int cutoff);
-    static QVector<int> findOcculsion(QImage input);
+
     static QImage drawOcculsion(QImage input);
     static QVector<float> findOccurrences(QImage input);
 
-    static void drawBezier(int p0x,int p0y,int p2x,int p2y,int p1x,int p1y, QPainter *img);
     static QImage findBackground(QImage input);
+    static QImage findTeeth(QImage input);
     
 private:
+    static QImage thresholdImage(QImage input, int cutoff);
+    static void drawBezier(int p0x,int p0y,int p2x,int p2y,int p1x,int p1y, QPainter *img);
+    static QVector<int> findOcculsion(QImage input);
+    static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
+                                int p1x,int p1y, QPainter *input);
     static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,
                                 int p1x,int p1y, int best, QImage img);
     static QVector<int> regValsBezier(int p0x,int p0y,int p2x,int p2y,
