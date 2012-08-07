@@ -318,10 +318,13 @@ QImage ImageProcessor::findBackground(QImage input) {
 }
 
 void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
-                                     int p2y, int p1x, int p1y, QPainter *input) {
+                                     int p2y, int p1x, int p1y,
+                                   int stDev, QPainter *input) {
     input->setPen(QColor(255,0,0));
+    QImage *imgInput = (QImage *) input->device();
+    input->setRenderHints(QPainter::Antialiasing);
 
-    float div = .1;
+    float div = 1.0/ (imgInput->width() * 2);
     for(float t = 0;t<1;t+= div) {
         float onemt = 1-t;
 
@@ -336,12 +339,62 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
         float slopeX = (2*onemt*(p1x-p0x)) + (2*t*(p2x-p1x));
         float slopeY = (2*onemt*(p1y-p0y)) + (2*t*(p2y-p1y));
 
-        float negInverse = -5 * slopeX / slopeY;
+        float negInverse = -1 * slopeX / slopeY;
 
-        QPoint start(x,y);
-        QPoint end(x + 5,y+negInverse);
+        //first lets move in the positive direction
+        int biggestChange = 0; //sometimes you can believe in change
+        //somtimes, you can't... who knows
 
-        input->drawLine(start,end);
+        float lookAtX = x;
+        float lookAtY = y;
+
+
+        int previousVal = qRed(imgInput->pixel(lookAtX,lookAtY));
+        int paintToX =x;
+        int paintToY =y;
+
+        while(imgInput->valid(lookAtX +1,lookAtY + negInverse)) {
+            lookAtX++;
+            lookAtY += negInverse;
+            int newVal = qRed(imgInput->pixel(lookAtX,lookAtY));
+            //int diff = newVal - previousVal;
+            //if(diff > previousVal) {
+            if(newVal < stDev) {
+                //biggestChange = diff;
+                paintToX = lookAtX;
+                paintToY = lookAtY;
+            }
+            //previousVal = newVal;
+        }
+
+        input->drawLine(x,y,paintToX,paintToY);
+
+        //now do it again for the negative direction
+        lookAtX = x;
+        lookAtY = y;
+
+        previousVal = qRed(imgInput->pixel(lookAtX,lookAtY));
+        paintToX =x;
+        paintToY =y;
+        biggestChange =0;
+
+        while(imgInput->valid(lookAtX -1,lookAtY - negInverse)) {
+            lookAtX--;
+            lookAtY -= negInverse;
+            int newVal = qRed(imgInput->pixel(lookAtX,lookAtY));
+            int diff = newVal - previousVal;
+            //if(diff > stDev) {
+            if(newVal < stDev) {
+               // biggestChange = diff;
+                paintToX = lookAtX;
+                paintToY = lookAtY;
+            }
+            //previousVal = newVal;
+        }
+
+        input->drawLine(x,y,paintToX,paintToY);
+
+
 
     }
 }
@@ -352,7 +405,7 @@ QImage ImageProcessor::findTeeth(QImage input) {
     QVector<int> occ = ImageProcessor::findOcculsion(returnMe);
     returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
     QPainter p(&returnMe);
-    ImageProcessor::drawBezier(
+    /*ImageProcessor::drawBezier(
                 occ.at(0),
                 occ.at(1),
                 occ.at(4),
@@ -360,7 +413,32 @@ QImage ImageProcessor::findTeeth(QImage input) {
                 occ.at(2),
                 occ.at(3),
                 &p
+                );*/
+
+    QVector<int> regVals = ImageProcessor::regValsBezier(
+                occ.at(0),
+                occ.at(1),
+                occ.at(4),
+                occ.at(5),
+                occ.at(2),
+                occ.at(3),
+                3,
+                returnMe
                 );
+
+    int sum=0;
+    foreach(int i ,regVals) {
+        sum+=i;
+    }
+    double average = ((double)sum) /  regVals.count();
+    double variance=0;
+    foreach(int i ,regVals) {
+        int val = i-average;
+        variance+= (val *val);
+    }
+    double standardDev =sqrt(variance / regVals.count());
+
+
     ImageProcessor::drawBezierDer(
                 occ.at(0),
                 occ.at(1),
@@ -368,6 +446,7 @@ QImage ImageProcessor::findTeeth(QImage input) {
                 occ.at(5),
                 occ.at(2),
                 occ.at(3),
+                (int)standardDev,
                 &p
                 );
 

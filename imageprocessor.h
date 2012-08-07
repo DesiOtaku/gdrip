@@ -46,7 +46,7 @@ private:
     static void drawBezier(int p0x,int p0y,int p2x,int p2y,int p1x,int p1y, QPainter *img);
     static QVector<int> findOcculsion(QImage input);
     static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
-                                int p1x,int p1y, QPainter *input);
+                                int p1x,int p1y, int stDev, QPainter *input);
     static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,
                                 int p1x,int p1y, int best, QImage img);
     static QVector<int> regValsBezier(int p0x,int p0y,int p2x,int p2y,
