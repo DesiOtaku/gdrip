@@ -1,0 +1,36 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/application-exit.png</file>
+        <file>icons/dialog-ok.png</file>
+        <file>icons/accessories-calculator.png</file>
+        <file>icons/dialog-information.png</file>
+        <file>icons/go-home.png</file>
+        <file>icons/object-flip-horizontal.png</file>
+        <file>icons/object-flip-vertical.png</file>
+        <file>icons/object-rotate-left.png</file>
+        <file>icons/dialog-warning.png</file>
+        <file>icons/dialog-ok-apply.png</file>
+        <file>icons/document-save-all.png</file>
+        <file>icons/document-save.png</file>
+        <file>icons/dialog-cancel.png</file>
+        <file>icons/document-open.png</file>
+        <file>icons/zoom-in.png</file>
+        <file>icons/zoom-out.png</file>
+        <file>icons/object-rotate-right.png</file>
+        <file>icons/zoom-original.png</file>
+        <file>icons/configure.png</file>
+        <file>icons/edit-redo.png</file>
+        <file>icons/edit-undo.png</file>
+        <file>icons/ktip.png</file>
+        <file>icons/preferences-system-power-management.png</file>
+        <file>icons/system-help.png</file>
+        <file>icons/weather-clear-night.png</file>
+        <file>icons/weather-clear.png</file>
+        <file>icons/audio-volume-muted.png</file>
+        <file>icons/transform-move.png</file>
+        <file>icons/measure.png</file>
+        <file>icons/zoom-fit-width.png</file>
+        <file>icons/contrast-high.png</file>
+        <file>icons/contrast-low.png</file>
+    </qresource>
+</RCC>

@@ -28,3 +28,6 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     radiographwidget.ui \
     aboutdialog.ui
+
+RESOURCES += \
+    icons.qrc

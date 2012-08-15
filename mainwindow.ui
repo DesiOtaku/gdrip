@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1024</width>
+    <height>768</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -17,8 +17,8 @@
    <enum>Qt::ToolButtonTextBesideIcon</enum>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
      <widget class="RadiographWidget" name="radioImageWidget" native="true"/>
     </item>
    </layout>
@@ -28,7 +28,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1024</width>
      <height>21</height>
     </rect>
    </property>
@@ -54,12 +54,40 @@
     <addaction name="actionStart_Over"/>
     <addaction name="separator"/>
     <addaction name="actionEqualize_Histogram"/>
+    <addaction name="actionMirrorVer"/>
+    <addaction name="actionMirror_Horizontally"/>
+    <addaction name="actionInvert_Image"/>
+    <addaction name="actionStrech_Histogram"/>
+    <addaction name="actionReduce_Noice"/>
+    <addaction name="actionEdge_Enchance"/>
+    <addaction name="separator"/>
     <addaction name="actionDraw_Occulsion"/>
     <addaction name="actionFind_Background"/>
     <addaction name="actionFind_Teeth"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="actionScroll"/>
+    <addaction name="actionMeasure"/>
+   </widget>
+   <widget class="QMenu" name="menuWindows">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionAction_bar"/>
+    <addaction name="actionTools"/>
+    <addaction name="actionHistogram"/>
    </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuImage"/>
+   <addaction name="menuWindows"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -73,14 +101,25 @@
    <addaction name="actionExit"/>
    <addaction name="separator"/>
    <addaction name="actionStart_Over"/>
+   <addaction name="separator"/>
+   <addaction name="actionMirrorVer"/>
+   <addaction name="actionMirror_Horizontally"/>
+   <addaction name="actionInvert_Image"/>
    <addaction name="actionEqualize_Histogram"/>
+   <addaction name="actionStrech_Histogram"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="histoDock">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="minimumSize">
     <size>
      <width>264</width>
-     <height>40</height>
+     <height>286</height>
     </size>
    </property>
    <property name="features">
@@ -99,7 +138,13 @@
        <property name="minimumSize">
         <size>
          <width>256</width>
-         <height>0</height>
+         <height>256</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>256</height>
         </size>
        </property>
       </widget>
@@ -108,10 +153,22 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="toolDock">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="minimumSize">
     <size>
-     <width>75</width>
-     <height>130</height>
+     <width>300</width>
+     <height>256</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>300</width>
+     <height>524287</height>
     </size>
    </property>
    <property name="features">
@@ -121,94 +178,262 @@
     <string>Tools</string>
    </property>
    <attribute name="dockWidgetArea">
-    <number>2</number>
+    <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_2">
-    <layout class="QVBoxLayout" name="verticalLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
      <item>
-      <widget class="QPushButton" name="pushButton">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset theme="zoom-in">
-         <normaloff/>
-        </iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>5</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QSlider" name="zoomSlider">
-         <property name="maximum">
-          <number>100</number>
-         </property>
-         <property name="value">
-          <number>50</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="tickPosition">
-          <enum>QSlider::TicksBelow</enum>
-         </property>
-         <property name="tickInterval">
-          <number>50</number>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Zoom</string>
          </property>
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+        <widget class="QPushButton" name="zoomIn">
+         <property name="text">
+          <string/>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>5</width>
-           <height>20</height>
-          </size>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/icons/zoom-in.png</normaloff>:/icons/zoom-in.png</iconset>
          </property>
-        </spacer>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QSlider" name="zoomSlider">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>50</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="tickPosition">
+            <enum>QSlider::TicksBelow</enum>
+           </property>
+           <property name="tickInterval">
+            <number>50</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="zoomOut">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/icons/zoom-out.png</normaloff>:/icons/zoom-out.png</iconset>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset theme="zoom-out">
-         <normaloff/>
-        </iconset>
-       </property>
-      </widget>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Brightness</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="brighten">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/icons/weather-clear.png</normaloff>:/icons/weather-clear.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QSlider" name="brightnessSlider">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>50</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="tickPosition">
+            <enum>QSlider::TicksBelow</enum>
+           </property>
+           <property name="tickInterval">
+            <number>50</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="darken">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/icons/weather-clear-night.png</normaloff>:/icons/weather-clear-night.png</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Rotate</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="rotateRight">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/icons/object-rotate-right.png</normaloff>:/icons/object-rotate-right.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QSlider" name="rotationSlider">
+           <property name="minimum">
+            <number>-180</number>
+           </property>
+           <property name="maximum">
+            <number>180</number>
+           </property>
+           <property name="singleStep">
+            <number>90</number>
+           </property>
+           <property name="pageStep">
+            <number>90</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="invertedAppearance">
+            <bool>false</bool>
+           </property>
+           <property name="invertedControls">
+            <bool>false</bool>
+           </property>
+           <property name="tickPosition">
+            <enum>QSlider::TicksBelow</enum>
+           </property>
+           <property name="tickInterval">
+            <number>50</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="rotateLeft">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/icons/object-rotate-left.png</normaloff>:/icons/object-rotate-left.png</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Contrast</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="higherContrast">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/icons/contrast-high.png</normaloff>:/icons/contrast-high.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QSlider" name="contrastSlider">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>50</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="tickPosition">
+            <enum>QSlider::TicksBelow</enum>
+           </property>
+           <property name="tickInterval">
+            <number>50</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="lowerContrast">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/icons/contrast-low.png</normaloff>:/icons/contrast-low.png</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </widget>
   </widget>
   <action name="actionOpen">
    <property name="icon">
-    <iconset theme="document-open">
-     <normaloff/>
-    </iconset>
+    <iconset theme="document-open" resource="icons.qrc">
+     <normaloff>:/icons/document-open.png</normaloff>:/icons/document-open.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open a new image</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -216,12 +441,14 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset theme="application-exit">
-     <normaloff/>
-    </iconset>
+    <iconset theme="application-exit" resource="icons.qrc">
+     <normaloff>:/icons/application-exit.png</normaloff>:/icons/application-exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
+   </property>
+   <property name="toolTip">
+    <string>Exit gdrip</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
@@ -229,12 +456,14 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset theme="help-about">
-     <normaloff/>
-    </iconset>
+    <iconset theme="help-about" resource="icons.qrc">
+     <normaloff>:/icons/dialog-information.png</normaloff>:/icons/dialog-information.png</iconset>
    </property>
    <property name="text">
     <string>About</string>
+   </property>
+   <property name="toolTip">
+    <string>About gdrip</string>
    </property>
    <property name="shortcut">
     <string>F1</string>
@@ -242,15 +471,14 @@
   </action>
   <action name="actionEqualize_Histogram">
    <property name="icon">
-    <iconset theme="accessories-calculator">
-     <normaloff/>
-    </iconset>
+    <iconset theme="accessories-calculator" resource="icons.qrc">
+     <normaloff>:/icons/accessories-calculator.png</normaloff>:/icons/accessories-calculator.png</iconset>
    </property>
    <property name="text">
     <string>Equalize Histogram</string>
    </property>
    <property name="toolTip">
-    <string>Equalize Histogram</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Equalize Histogram&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This will spread the pixel values such that each value will occur approximately the same amount.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>
@@ -258,12 +486,14 @@
   </action>
   <action name="actionStart_Over">
    <property name="icon">
-    <iconset theme="go-home">
-     <normaloff/>
-    </iconset>
+    <iconset theme="go-home" resource="icons.qrc">
+     <normaloff>:/icons/go-home.png</normaloff>:/icons/go-home.png</iconset>
    </property>
    <property name="text">
     <string>Start Over</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Start Over&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Remove all the changes done to the image and start all over again.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning&lt;/span&gt;: This will &lt;span style=&quot; color:#800000;&quot;&gt;not&lt;/span&gt; change the slider values under the &amp;quot;Tools&amp;quot; dock&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="shortcut">
     <string>Home</string>
@@ -273,24 +503,24 @@
    <property name="text">
     <string>Find Background</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+B</string>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Find Background&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning&lt;/span&gt;: Don't use if you don't know how it works&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
   <action name="actionFind_Teeth">
    <property name="text">
     <string>Find Teeth</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+T</string>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Find Teeth&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning&lt;/span&gt;: Don't use if you don't know how it works&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
   <action name="actionDraw_Occulsion">
    <property name="text">
     <string>Draw Occulsion</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+D</string>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Draw Occulsion&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning&lt;/span&gt;: Don't use if you don't know how it works&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
   <action name="actionSave_Image">
@@ -302,8 +532,170 @@
    <property name="text">
     <string>Save Image</string>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Save Image&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Save the image to a file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="icon">
+    <iconset theme="edit-undo">
+     <normaloff/>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Undo</string>
+   </property>
+   <property name="toolTip">
+    <string>Undo the last action</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+U</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="icon">
+    <iconset theme="edit-redo" resource="icons.qrc">
+     <normaloff>:/icons/edit-redo.png</normaloff>:/icons/edit-redo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Redo</string>
+   </property>
+   <property name="toolTip">
+    <string>Redo the action that was previously undone</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionAction_bar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Action bar</string>
+   </property>
+   <property name="toolTip">
+    <string>Toggle the visibility of the action bar</string>
+   </property>
+  </action>
+  <action name="actionTools">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Tools</string>
+   </property>
+   <property name="toolTip">
+    <string>Toggle the visibility of the tools dock</string>
+   </property>
+  </action>
+  <action name="actionHistogram">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Histogram</string>
+   </property>
+   <property name="toolTip">
+    <string>Toggle the visibility of the histogram dock</string>
+   </property>
+  </action>
+  <action name="actionMirrorVer">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/object-flip-vertical.png</normaloff>:/icons/object-flip-vertical.png</iconset>
+   </property>
+   <property name="text">
+    <string>Mirror Vertically</string>
+   </property>
+  </action>
+  <action name="actionMirror_Horizontally">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/object-flip-horizontal.png</normaloff>:/icons/object-flip-horizontal.png</iconset>
+   </property>
+   <property name="text">
+    <string>Mirror Horizontally</string>
+   </property>
+  </action>
+  <action name="actionInvert_Image">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/preferences-system-power-management.png</normaloff>:/icons/preferences-system-power-management.png</iconset>
+   </property>
+   <property name="text">
+    <string>Invert Image</string>
+   </property>
+   <property name="toolTip">
+    <string>Invert the Image such that black is now white, and vice-versa</string>
+   </property>
+  </action>
+  <action name="actionStrech_Histogram">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/zoom-fit-width.png</normaloff>:/icons/zoom-fit-width.png</iconset>
+   </property>
+   <property name="text">
+    <string>Strech Histogram</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Strech Histogram&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Strech the bottom and top values of the histogram. This is different from histogram equalization in this will only do a linear interpolation between the minimum and maxium value.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionReduce_Noice">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/audio-volume-muted.png</normaloff>:/icons/audio-volume-muted.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reduce Noise</string>
+   </property>
+   <property name="toolTip">
+    <string>Reduce the amount of noice in the image</string>
+   </property>
+  </action>
+  <action name="actionEdge_Enchance">
+   <property name="text">
+    <string>Edge Enchance</string>
+   </property>
+   <property name="toolTip">
+    <string>Enchance the edges of the image</string>
+   </property>
+  </action>
+  <action name="actionScroll">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/transform-move.png</normaloff>:/icons/transform-move.png</iconset>
+   </property>
+   <property name="text">
+    <string>Scroll</string>
+   </property>
+   <property name="toolTip">
+    <string>Use the mouse to scroll</string>
+   </property>
+  </action>
+  <action name="actionMeasure">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/measure.png</normaloff>:/icons/measure.png</iconset>
+   </property>
+   <property name="text">
+    <string>Measure</string>
+   </property>
+   <property name="toolTip">
+    <string>Use the mouse to measure</string>
    </property>
   </action>
  </widget>
@@ -322,7 +714,9 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>actionExit</sender>
@@ -341,34 +735,178 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton</sender>
+   <sender>zoomIn</sender>
    <signal>clicked()</signal>
    <receiver>zoomSlider</receiver>
    <slot>addStep()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1007</x>
-     <y>90</y>
+     <x>72</x>
+     <y>408</y>
     </hint>
     <hint type="destinationlabel">
-     <x>971</x>
-     <y>222</y>
+     <x>52</x>
+     <y>610</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>pushButton_2</sender>
+   <sender>zoomOut</sender>
    <signal>clicked()</signal>
    <receiver>zoomSlider</receiver>
    <slot>subtractStep()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>998</x>
-     <y>559</y>
+     <x>72</x>
+     <y>742</y>
     </hint>
     <hint type="destinationlabel">
-     <x>961</x>
-     <y>343</y>
+     <x>52</x>
+     <y>712</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAction_bar</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>mainToolBar</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>35</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionTools</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>toolDock</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>149</x>
+     <y>542</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionHistogram</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>histoDock</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>149</x>
+     <y>193</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>brighten</sender>
+   <signal>clicked()</signal>
+   <receiver>brightnessSlider</receiver>
+   <slot>addStep()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>111</x>
+     <y>397</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>110</x>
+     <y>470</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>darken</sender>
+   <signal>clicked()</signal>
+   <receiver>brightnessSlider</receiver>
+   <slot>subtractStep()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>115</x>
+     <y>727</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>118</x>
+     <y>647</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotateRight</sender>
+   <signal>clicked()</signal>
+   <receiver>rotationSlider</receiver>
+   <slot>addStep()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>190</x>
+     <y>397</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>181</x>
+     <y>467</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotateLeft</sender>
+   <signal>clicked()</signal>
+   <receiver>rotationSlider</receiver>
+   <slot>subtractStep()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>188</x>
+     <y>730</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>189</x>
+     <y>626</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>higherContrast</sender>
+   <signal>clicked()</signal>
+   <receiver>contrastSlider</receiver>
+   <slot>addStep()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>256</x>
+     <y>391</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>253</x>
+     <y>446</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lowerContrast</sender>
+   <signal>clicked()</signal>
+   <receiver>contrastSlider</receiver>
+   <slot>subtractStep()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>266</x>
+     <y>723</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>260</x>
+     <y>655</y>
     </hint>
    </hints>
   </connection>
