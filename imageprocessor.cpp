@@ -90,7 +90,8 @@ QImage ImageProcessor::thresholdImage(QImage input, int cutoff) {
         for(int y=0;y<input.height();y++) {
             int val = qRed(input.pixel(x,y));
             if(val > cutoff) {
-                returnMe.setPixel(x,y,255);
+                //returnMe.setPixel(x,y,255);
+                returnMe.setPixel(x,y,qRgb(255,255,255));
             } else {
                 returnMe.setPixel(x,y,0);
             }
@@ -342,29 +343,23 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
         float negInverse = -1 * slopeX / slopeY;
 
         //first lets move in the positive direction
-        int biggestChange = 0; //sometimes you can believe in change
-        //somtimes, you can't... who knows
+        bool goOn = true; //go ooooooooooooooooooon
 
         float lookAtX = x;
         float lookAtY = y;
 
-
-        int previousVal = qRed(imgInput->pixel(lookAtX,lookAtY));
         int paintToX =x;
         int paintToY =y;
 
-        while(imgInput->valid(lookAtX +1,lookAtY + negInverse)) {
+        while(imgInput->valid(lookAtX +1,lookAtY + negInverse) && goOn) {
             lookAtX++;
             lookAtY += negInverse;
             int newVal = qRed(imgInput->pixel(lookAtX,lookAtY));
-            //int diff = newVal - previousVal;
-            //if(diff > previousVal) {
-            if(newVal < stDev) {
-                //biggestChange = diff;
+            if(newVal > stDev) {
                 paintToX = lookAtX;
                 paintToY = lookAtY;
+                goOn = false;
             }
-            //previousVal = newVal;
         }
 
         input->drawLine(x,y,paintToX,paintToY);
@@ -373,28 +368,22 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
         lookAtX = x;
         lookAtY = y;
 
-        previousVal = qRed(imgInput->pixel(lookAtX,lookAtY));
         paintToX =x;
         paintToY =y;
-        biggestChange =0;
+        goOn = true;
 
-        while(imgInput->valid(lookAtX -1,lookAtY - negInverse)) {
+        while(imgInput->valid(lookAtX -1,lookAtY - negInverse) && goOn) {
             lookAtX--;
             lookAtY -= negInverse;
             int newVal = qRed(imgInput->pixel(lookAtX,lookAtY));
-            int diff = newVal - previousVal;
-            //if(diff > stDev) {
-            if(newVal < stDev) {
-               // biggestChange = diff;
+            if(newVal > stDev) {
                 paintToX = lookAtX;
                 paintToY = lookAtY;
+                goOn = false;
             }
-            //previousVal = newVal;
         }
 
         input->drawLine(x,y,paintToX,paintToY);
-
-
 
     }
 }
@@ -446,7 +435,7 @@ QImage ImageProcessor::findTeeth(QImage input) {
                 occ.at(5),
                 occ.at(2),
                 occ.at(3),
-                (int)standardDev,
+                (int)(average + (2*standardDev)),
                 &p
                 );
 
@@ -454,58 +443,3 @@ QImage ImageProcessor::findTeeth(QImage input) {
 
     return returnMe;
 }
-
-
-//--------------optminal threshold (Otsu method)
-//first make a probably array of the values
-//    QVector<float> pi;
-//    float totalPixels = img.width()*img.height();
-//    float pSingle = 1.0 / totalPixels;
-//    pi.fill(0,256);
-//    for(int x=0;x<img.width();x++) {
-//        for(int y=0;y<img.height();y++) {
-//            int index = qRed(img.pixel(x,y));
-//            float newVal = pi.value(index)+pSingle;
-//            pi.replace(index,newVal);
-//        }
-//    }
-
-//    //now find the "image average" aka ut
-//    float ut =0;
-//    for(int i=0;i<256;i++) {
-//        ut += (i * pi.value(i) );
-//    }
-
-//    qDebug()<<"ut: "<<ut;
-
-//    int bestK =0;
-//    float bestKVal = 0;
-
-//    for(int k=1;k<256;k++) {
-//        //first calculate w(k)
-//        float wk=0;
-//        for(int i=0;i<k;i++) {
-//            wk += pi.value(i);
-//        }
-
-//        //now calculate u(k)
-//        float uk=0;
-//        for(int i=k+1; i<256;i++) {
-//            uk += pi.value(i);
-//        }
-
-
-//        //now calculate the between class variance
-//        float numb = ut *  (wk - uk) * (wk - uk);
-//        //float denom = wk*uk;
-//        float denom = 1;
-//        float kVal = (numb *numb) / denom;
-//        if((kVal > bestKVal) &&
-//                (denom !=  0)){
-//            bestK = k;
-//            bestKVal = kVal;
-//        }
-//    }
-
-//    qDebug()<<bestK;
-//    qDebug()<<bestKVal;

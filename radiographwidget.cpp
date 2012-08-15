@@ -24,6 +24,7 @@
 #include <QPainter>
 #include <QProgressDialog>
 #include <QGraphicsPixmapItem>
+#include <QBrush>
 
 #include "math.h"
 
@@ -59,5 +60,4 @@ void RadiographWidget::setImage(QImage img) {
     this->setInteractive(true);
     this->setRenderHints(QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
     this->setDragMode(QGraphicsView::ScrollHandDrag);
-    gpix->setFlags(0);
 }
