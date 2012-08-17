@@ -40,6 +40,15 @@ public:
 
     static QImage findBackground(QImage input);
     static QImage findTeeth(QImage input);
+
+    static QImage brightenImage(QImage original, int amount);
+    static QImage constrastImage(QImage original, int amount);
+    static QImage invertImage(QImage input);
+    static QImage spreadHistogram(QImage input);
+    static QImage mirrorVertically(QImage input);
+    static QImage mirrorHorizontally(QImage input);
+
+
     
 private:
     static QImage thresholdImage(QImage input, int cutoff);

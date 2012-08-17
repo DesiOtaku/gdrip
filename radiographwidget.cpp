@@ -33,7 +33,7 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     ui(new Ui::RadiographWidget)
 {
     ui->setupUi(this);
-    m_zoom = 50;
+    m_Rotation = 0;
 }
 
 RadiographWidget::~RadiographWidget()
@@ -42,22 +42,27 @@ RadiographWidget::~RadiographWidget()
 }
 
 void RadiographWidget::setZoom(int newZoom) {
-    m_zoom = newZoom;
     float amount =  (newZoom/50.0);
-    this->resetMatrix();
-    this->scale(amount,amount);
-
+    m_Item->setScale(amount);
 }
 
+void RadiographWidget::setRotation(int angle) {
+    m_Rotation = angle;
+    m_Item->setRotation(angle);
+}
 
 void RadiographWidget::setImage(QImage img) {
-    m_pix.convertFromImage(img,Qt::ColorOnly);
+    QPixmap pixmap;
+    pixmap.convertFromImage(img,Qt::ColorOnly);
     ui->label->setText("");
 
     QGraphicsScene *scene = new QGraphicsScene(this);
-    QGraphicsPixmapItem *gpix=scene->addPixmap(m_pix);
+    m_Item=scene->addPixmap(pixmap);
+    QRectF bounds = m_Item->boundingRect();
+    m_Item->setTransformOriginPoint(bounds.width()/2,bounds.height()/2);
     this->setScene(scene);
     this->setInteractive(true);
     this->setRenderHints(QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
     this->setDragMode(QGraphicsView::ScrollHandDrag);
+    setRotation(m_Rotation);
 }

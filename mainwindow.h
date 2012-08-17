@@ -54,6 +54,13 @@ public slots:
     void handleFindBack();
     void handleSaveImage();
     void handleFindTeeth();
+    void handleBrighten(int amount);
+    void handleContrast(int amount);
+    void handleMirrorVert();
+    void handleMirrorHorizont();
+    void handleInvertImage();
+    void handleStrechHisto();
+
 
     
 private:

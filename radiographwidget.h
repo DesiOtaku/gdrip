@@ -43,12 +43,12 @@ public:
     
 public slots:
     void setZoom(int newZoom);
+    void setRotation(int angle);
 
 private:
     Ui::RadiographWidget *ui;
-    int m_zoom;
-
-    QPixmap m_pix;
+    QGraphicsPixmapItem *m_Item;
+    int m_Rotation;
 };
 
 #endif // RADIOGRAPHWIDGET_H

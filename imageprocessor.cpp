@@ -443,3 +443,136 @@ QImage ImageProcessor::findTeeth(QImage input) {
 
     return returnMe;
 }
+
+QImage ImageProcessor::brightenImage(QImage original, int amount) {
+    QImage returnMe(original.width(),original.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
+
+    QImage addMe(original.width(),original.height(),QImage::Format_ARGB32);
+
+    if(amount > 50) { //brighten for rizzle
+        painter.setCompositionMode(QPainter::CompositionMode_Plus);
+        int alpha = (int) (( (amount-50) / 50.0) * 255.0);
+        addMe.fill(QColor(255,255,255,alpha));
+    } else if(amount < 50) {
+        painter.setCompositionMode(QPainter::CompositionMode_Multiply);
+        int alpha = (int) (( (50-amount) / 50.0) * 255.0);
+        addMe.fill(QColor(0,0,0,alpha));
+    } else { //no point in wasting my time
+        return original;
+    }
+
+    painter.drawImage(0,0,original);
+    painter.drawImage(0,0,addMe);
+
+    return returnMe;
+}
+
+QImage ImageProcessor::constrastImage(QImage original, int amount) {
+    QImage returnMe(original.width(),original.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
+
+
+    //Taken from Wikipedia / GIMP at http://en.wikipedia.org/wiki/Image_editing#Contrast_change_and_brightening
+    double frac = ((amount - 50)*2) / 100.0;
+    for(int x=0;x<original.width();x++) {
+        for(int y=0;y<original.height();y++) {
+            double value = (qRed(original.pixel(x,y)))/255.0;
+            double newVal = (value - 0.5) * (tan ((frac + 1) * 0.78539816339) ) + 0.5;
+            newVal = qMin(newVal*255,255.0);
+            newVal = qMax(newVal,0.0);
+            int setVal = (int)newVal;
+            painter.fillRect(x,y,1,1,QColor(setVal,setVal,setVal));
+        }
+    }
+
+
+    return returnMe;
+}
+
+QImage ImageProcessor::invertImage(QImage input) {
+    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
+
+    for(int x=0;x<input.width();x++) {
+        for(int y=0;y<input.height();y++) {
+            int value = qRed(input.pixel(x,y));
+            int newValue = 255 - value;
+            painter.fillRect(x,y,1,1,QColor(newValue,newValue,newValue));
+        }
+    }
+
+    return returnMe;
+
+}
+
+QImage ImageProcessor::spreadHistogram(QImage input) {
+    //Really, this is normalization, http://en.wikipedia.org/wiki/Normalization_(image_processing)
+    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
+    QVector<float> occ = ImageProcessor::findOccurrences(input);
+    int lowest =0;
+    bool goOn = true;
+
+    for(int i=0;(i<occ.size()) && goOn;i++) {
+        if(occ.at(i) == 0.0) {
+            lowest = i;
+        } else {
+            goOn = false;
+        }
+    }
+
+    int highest = 255;
+    goOn =true;
+
+    for(int i=occ.size()-1;(i>0) && goOn;i--) {
+        if(occ.at(i) == 0.0) {
+            highest = i;
+        } else {
+            goOn = false;
+        }
+    }
+
+    int diff = highest - lowest;
+
+    for(int x=0;x<input.width();x++) {
+        for(int y=0;y<input.height();y++) {
+            int value = qRed(input.pixel(x,y));
+            int newValue =(int) ((value - lowest) * (255.0 / diff));
+            painter.fillRect(x,y,1,1,QColor(newValue,newValue,newValue));
+        }
+    }
+
+    return returnMe;
+}
+
+QImage ImageProcessor::mirrorVertically(QImage input) {
+    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
+    QPixmap newInput;
+    newInput.convertFromImage(input);
+
+
+    //TODO: Use drawPixmapFragments
+    for(int y=0;y<input.height();y++) {
+        painter.drawPixmap(0,input.height()-y-1, newInput,
+                           0,y, input.width(),1);
+    }
+
+    return returnMe;
+}
+
+QImage ImageProcessor::mirrorHorizontally(QImage input) {
+    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
+    QPixmap newInput;
+    newInput.convertFromImage(input);
+
+    //TODO: Use drawPixmapFragments
+    for(int x=0;x<input.width();x++) {
+        painter.drawPixmap(input.width()-x-1,0, newInput,
+                           x,0, 1,input.height() );
+    }
+
+    return returnMe;
+}

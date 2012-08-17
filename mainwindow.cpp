@@ -39,6 +39,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openImage()));
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(showAbout()));
     connect(ui->zoomSlider,SIGNAL(valueChanged(int)),ui->radioImageWidget,SLOT(setZoom(int)));
+    connect(ui->brightnessSlider,SIGNAL(valueChanged(int)),this,SLOT(handleBrighten(int)));
+    connect(ui->rotationSlider,SIGNAL(valueChanged(int)),ui->radioImageWidget,SLOT(setRotation(int)));
+    connect(ui->contrastSlider,SIGNAL(valueChanged(int)),this,SLOT(handleContrast(int)));
     connect(ui->actionEqualize_Histogram,SIGNAL(triggered()),
             this,SLOT(handleEqualize()));
     connect(ui->actionStart_Over,SIGNAL(triggered()),
@@ -51,6 +54,14 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(handleSaveImage()));
     connect(ui->actionFind_Teeth,SIGNAL(triggered()),
             this,SLOT(handleFindTeeth()));
+    connect(ui->actionMirrorVer,SIGNAL(triggered()),
+            this,SLOT(handleMirrorVert()));
+    connect(ui->actionMirror_Horizontally,SIGNAL(triggered()),
+            this,SLOT(handleMirrorHorizont()));
+    connect(ui->actionInvert_Image,SIGNAL(triggered()),
+            this,SLOT(handleInvertImage()));
+    connect(ui->actionStrech_Histogram,SIGNAL(triggered()),
+            this,SLOT(handleStrechHisto()));
 
     QSettings settings("Tej A. Shah", "gdrip");
     restoreState(settings.value("windowState").toByteArray());
@@ -122,6 +133,12 @@ void MainWindow::handleEqualize() {
 
 void MainWindow::handleStartOver() {
     m_current = m_original;
+
+    ui->zoomSlider->setValue(50);
+    ui->brightnessSlider->setValue(50);
+    ui->rotationSlider->setValue(0);
+    ui->contrastSlider->setValue(50);
+
     ui->radioImageWidget->setImage(m_original);
     ui->histoWidget->setProcessImage(m_original);
     this->statusBar()->showMessage(tr("Started over"),3000);
@@ -156,4 +173,44 @@ void MainWindow::handleFindTeeth() {
     ui->radioImageWidget->setImage(m_current);
     ui->histoWidget->setProcessImage(m_current);
     this->statusBar()->showMessage(tr("Done finding teeth"),3000);
+}
+
+void MainWindow::handleBrighten(int amount) {
+    m_current = ImageProcessor::brightenImage(m_original,amount);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+}
+
+void MainWindow::handleContrast(int amount) {
+    m_current = ImageProcessor::constrastImage(m_original,amount);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+}
+
+void MainWindow::handleMirrorVert() {
+    m_current = ImageProcessor::mirrorVertically(m_current);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+    this->statusBar()->showMessage(tr("Done mirroing vertically"),3000);
+}
+
+void MainWindow::handleMirrorHorizont() {
+    m_current = ImageProcessor::mirrorHorizontally(m_current);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+    this->statusBar()->showMessage(tr("Done mirroing horizontally"),3000);
+}
+
+void MainWindow::handleInvertImage() {
+    m_current = ImageProcessor::invertImage(m_current);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+    this->statusBar()->showMessage(tr("Done inverting image"),3000);
+}
+
+void MainWindow::handleStrechHisto() {
+    m_current = ImageProcessor::spreadHistogram(m_current);
+    ui->radioImageWidget->setImage(m_current);
+    ui->histoWidget->setProcessImage(m_current);
+    this->statusBar()->showMessage(tr("Done stretching histogram"),3000);
 }
