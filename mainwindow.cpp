@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openImage()));
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(showAbout()));
     connect(ui->zoomSlider,SIGNAL(valueChanged(int)),ui->radioImageWidget,SLOT(setZoom(int)));
-    connect(ui->brightnessSlider,SIGNAL(valueChanged(int)),this,SLOT(handleBrighten(int)));
+    connect(ui->brightnessSlider,SIGNAL(valueChanged(int)),ui->radioImageWidget,SLOT(setBrightness(int)));
     connect(ui->rotationSlider,SIGNAL(valueChanged(int)),ui->radioImageWidget,SLOT(setRotation(int)));
     connect(ui->contrastSlider,SIGNAL(valueChanged(int)),this,SLOT(handleContrast(int)));
     connect(ui->actionEqualize_Histogram,SIGNAL(triggered()),

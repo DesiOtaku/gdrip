@@ -25,6 +25,8 @@
 #include <QProgressDialog>
 #include <QGraphicsPixmapItem>
 #include <QBrush>
+#include <QGraphicsRectItem>
+#include <QRectF>
 
 #include "math.h"
 
@@ -34,6 +36,21 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
 {
     ui->setupUi(this);
     m_Rotation = 0;
+
+    QGraphicsScene *scene = new QGraphicsScene(this);
+    m_PixItem= new QGraphicsPixmapItem(0,scene);
+
+    this->setScene(scene);
+    this->setInteractive(true);
+    this->setRenderHints(QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
+    this->setDragMode(QGraphicsView::ScrollHandDrag);
+
+    m_MJItem = new QGraphicsRectItem(m_PixItem->boundingRect(),m_PixItem);
+    m_MJItem->setBrush(QBrush(Qt::green));
+
+    m_MJEffect = new QGraphicsOpacityEffect();
+    m_MJEffect->setOpacity(0);
+    m_MJItem->setGraphicsEffect(m_MJEffect);
 }
 
 RadiographWidget::~RadiographWidget()
@@ -43,26 +60,30 @@ RadiographWidget::~RadiographWidget()
 
 void RadiographWidget::setZoom(int newZoom) {
     float amount =  (newZoom/50.0);
-    m_Item->setScale(amount);
+    m_PixItem->setScale(amount);
 }
 
 void RadiographWidget::setRotation(int angle) {
     m_Rotation = angle;
-    m_Item->setRotation(angle);
+    m_PixItem->setRotation(angle);
+}
+
+void RadiographWidget::setBrightness(int amount) {
+    if(amount < 50) { //darken
+        m_MJItem->setBrush(Qt::black);
+        m_MJEffect->setOpacity(((50-amount) * 2) / 100.0);
+    } else { //brighten
+        m_MJItem->setBrush(Qt::white);
+        m_MJEffect->setOpacity(((amount-50) * 2) / 100.0);
+    }
 }
 
 void RadiographWidget::setImage(QImage img) {
     QPixmap pixmap;
     pixmap.convertFromImage(img,Qt::ColorOnly);
     ui->label->setText("");
-
-    QGraphicsScene *scene = new QGraphicsScene(this);
-    m_Item=scene->addPixmap(pixmap);
-    QRectF bounds = m_Item->boundingRect();
-    m_Item->setTransformOriginPoint(bounds.width()/2,bounds.height()/2);
-    this->setScene(scene);
-    this->setInteractive(true);
-    this->setRenderHints(QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
-    this->setDragMode(QGraphicsView::ScrollHandDrag);
-    setRotation(m_Rotation);
+    m_PixItem->setPixmap(pixmap);
+    QRectF bounds = m_PixItem->boundingRect();
+    m_PixItem->setTransformOriginPoint(bounds.width()/2,bounds.height()/2);
+    m_MJItem->setRect(m_PixItem->boundingRect());
 }

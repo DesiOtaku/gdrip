@@ -23,6 +23,7 @@
 #include <QWidget>
 #include <QPixmap>
 #include <QGraphicsView>
+#include <QGraphicsOpacityEffect>
 
 namespace Ui {
 class RadiographWidget;
@@ -44,10 +45,14 @@ public:
 public slots:
     void setZoom(int newZoom);
     void setRotation(int angle);
+    void setBrightness(int amount);
 
 private:
     Ui::RadiographWidget *ui;
-    QGraphicsPixmapItem *m_Item;
+    QGraphicsPixmapItem *m_PixItem;
+    QGraphicsRectItem *m_MJItem;
+    QGraphicsOpacityEffect *m_MJEffect;
+
     int m_Rotation;
 };
 
