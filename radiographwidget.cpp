@@ -27,13 +27,13 @@
 #include <QBrush>
 #include <QGraphicsRectItem>
 #include <QRectF>
+#include <QDragMoveEvent>
 
 #include "math.h"
 
 RadiographWidget::RadiographWidget(QWidget *parent) :
     QGraphicsView(parent),
-    ui(new Ui::RadiographWidget)
-{
+    ui(new Ui::RadiographWidget) {
     ui->setupUi(this);
     m_Rotation = 0;
 
@@ -41,9 +41,7 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_PixItem= new QGraphicsPixmapItem(0,scene);
 
     this->setScene(scene);
-    this->setInteractive(true);
-    this->setRenderHints(QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
-    this->setDragMode(QGraphicsView::ScrollHandDrag);
+    this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
     m_MJItem = new QGraphicsRectItem(m_PixItem->boundingRect(),m_PixItem);
     m_MJItem->setBrush(QBrush(Qt::green));
@@ -51,16 +49,18 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_MJEffect = new QGraphicsOpacityEffect();
     m_MJEffect->setOpacity(0);
     m_MJItem->setGraphicsEffect(m_MJEffect);
+    this->setDragMode(QGraphicsView::ScrollHandDrag);
 }
 
-RadiographWidget::~RadiographWidget()
-{
+RadiographWidget::~RadiographWidget() {
     delete ui;
 }
 
 void RadiographWidget::setZoom(int newZoom) {
     float amount =  (newZoom/50.0);
-    m_PixItem->setScale(amount);
+    //m_PixItem->setScale(amount); //I have no clue why this moves the screen over center
+    this->resetMatrix();
+    this->scale(amount,amount);
 }
 
 void RadiographWidget::setRotation(int angle) {
@@ -81,7 +81,6 @@ void RadiographWidget::setBrightness(int amount) {
 void RadiographWidget::setImage(QImage img) {
     QPixmap pixmap;
     pixmap.convertFromImage(img,Qt::ColorOnly);
-    ui->label->setText("");
     m_PixItem->setPixmap(pixmap);
     QRectF bounds = m_PixItem->boundingRect();
     m_PixItem->setTransformOriginPoint(bounds.width()/2,bounds.height()/2);

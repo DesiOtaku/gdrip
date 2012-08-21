@@ -32,5 +32,6 @@
         <file>icons/zoom-fit-width.png</file>
         <file>icons/contrast-high.png</file>
         <file>icons/contrast-low.png</file>
+        <file>icons/gdrip.png</file>
     </qresource>
 </RCC>

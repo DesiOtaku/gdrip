@@ -13,6 +13,10 @@
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/icons/gdrip.png</normaloff>:/icons/gdrip.png</iconset>
+  </property>
   <property name="toolButtonStyle">
    <enum>Qt::ToolButtonTextBesideIcon</enum>
   </property>

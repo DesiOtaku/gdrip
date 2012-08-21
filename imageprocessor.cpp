@@ -29,7 +29,8 @@ ImageProcessor::ImageProcessor(QObject *parent) :
 }
 
 QImage ImageProcessor::equalizeHistogram(QImage input) {
-    QImage returnMe(input);
+    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
 
     QVector<float> occ = ImageProcessor::findOccurrences(input);
     QVector<float> pdf;
@@ -43,8 +44,8 @@ QImage ImageProcessor::equalizeHistogram(QImage input) {
         for(int y=0;y<input.height();y++) {
             int originalVal = qRed(input.pixel(x,y));
             float pdfVal = pdf.value(originalVal);
-            int newVal = (int) (255 * pdfVal);
-            returnMe.setPixel(x,y,newVal);
+            int newVal = (int)(pdfVal * 255);
+            painter.fillRect(x,y,1,1,QColor(newVal,newVal,newVal));
         }
     }
     return returnMe;

@@ -11,10 +11,6 @@ General function todo List:
 - Add mesure function (by pixels I guess)
 - Sharpen
 - Undo/redo stack
-- Mirror image
-- Rotate image
-- Brightness / contrast
-- Invert
-- Histogram strech
 - Reduce noise
 - Edge enhance
+- Mouse scrolling

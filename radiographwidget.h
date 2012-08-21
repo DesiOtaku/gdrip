@@ -41,7 +41,7 @@ public:
     explicit RadiographWidget(QWidget *parent = 0);
     void setImage(QImage img);
     ~RadiographWidget();
-    
+
 public slots:
     void setZoom(int newZoom);
     void setRotation(int angle);
