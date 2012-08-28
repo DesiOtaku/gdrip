@@ -70,16 +70,6 @@
     <addaction name="actionFind_Teeth"/>
     <addaction name="separator"/>
    </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
-    <addaction name="separator"/>
-    <addaction name="actionScroll"/>
-    <addaction name="actionMeasure"/>
-   </widget>
    <widget class="QMenu" name="menuWindows">
     <property name="title">
      <string>View</string>
@@ -89,7 +79,6 @@
     <addaction name="actionHistogram"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
    <addaction name="menuImage"/>
    <addaction name="menuWindows"/>
    <addaction name="menuHelp"/>

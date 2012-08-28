@@ -41,17 +41,26 @@ public:
     explicit RadiographWidget(QWidget *parent = 0);
     void setImage(QImage img);
     ~RadiographWidget();
+    void mouseMoveEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
 
 public slots:
     void setZoom(int newZoom);
     void setRotation(int angle);
     void setBrightness(int amount);
+    void resetView();
+
+signals:
+    void messageUpdate(QString message,int timeout);
+
 
 private:
     Ui::RadiographWidget *ui;
     QGraphicsPixmapItem *m_PixItem;
     QGraphicsRectItem *m_MJItem;
     QGraphicsOpacityEffect *m_MJEffect;
+    QPoint m_mouseStartPoint;
 
     int m_Rotation;
 };

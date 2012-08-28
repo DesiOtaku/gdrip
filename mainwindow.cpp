@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(handleInvertImage()));
     connect(ui->actionStrech_Histogram,SIGNAL(triggered()),
             this,SLOT(handleStrechHisto()));
+    connect(ui->radioImageWidget,SIGNAL(messageUpdate(QString,int)),this->statusBar(),SLOT(showMessage(QString,int)));
 
     QSettings settings("Tej A. Shah", "gdrip");
     restoreState(settings.value("windowState").toByteArray());
@@ -139,7 +140,9 @@ void MainWindow::handleStartOver() {
     ui->rotationSlider->setValue(0);
     ui->contrastSlider->setValue(50);
 
+
     ui->radioImageWidget->setImage(m_original);
+    ui->radioImageWidget->resetView();
     ui->histoWidget->setProcessImage(m_original);
     this->statusBar()->showMessage(tr("Started over"),3000);
 }

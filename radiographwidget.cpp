@@ -28,6 +28,7 @@
 #include <QGraphicsRectItem>
 #include <QRectF>
 #include <QDragMoveEvent>
+#include <QTransform>
 
 #include "math.h"
 
@@ -50,6 +51,7 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_MJEffect->setOpacity(0);
     m_MJItem->setGraphicsEffect(m_MJEffect);
     this->setDragMode(QGraphicsView::ScrollHandDrag);
+
 }
 
 RadiographWidget::~RadiographWidget() {
@@ -85,4 +87,40 @@ void RadiographWidget::setImage(QImage img) {
     QRectF bounds = m_PixItem->boundingRect();
     m_PixItem->setTransformOriginPoint(bounds.width()/2,bounds.height()/2);
     m_MJItem->setRect(m_PixItem->boundingRect());
+}
+
+void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
+    if(event->buttons() == Qt::MiddleButton) {
+        QPoint diff = event->pos() - m_mouseStartPoint;
+        QTransform trans;
+        QRectF bounds = m_PixItem->boundingRect();
+        trans.translate(bounds.width()/2,bounds.height()/2);
+        trans.rotate(diff.x() / 10.0,Qt::YAxis);
+        trans.rotate(diff.y() / 10.0,Qt::XAxis);
+        trans.translate(bounds.width()/-2,bounds.height()/-2);
+        m_PixItem->setTransform(trans,true);
+        m_mouseStartPoint = event->pos();
+    } else {
+        QGraphicsView::mouseMoveEvent(event);
+    }
+}
+
+void RadiographWidget::mousePressEvent(QMouseEvent *event) {
+    if(event->buttons() == Qt::MiddleButton) {
+        m_mouseStartPoint = event->pos();
+        this->viewport()->setCursor(QCursor(Qt::SizeAllCursor));
+    } else {
+        QGraphicsView::mousePressEvent(event);
+    }
+}
+
+void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
+    this->viewport()->setCursor(QCursor(Qt::OpenHandCursor));
+    QGraphicsView::mouseReleaseEvent(event);
+}
+
+void RadiographWidget::resetView() {
+    QTransform trans;
+    m_PixItem->setTransform(trans);
+    this->resetMatrix();
 }
