@@ -29,6 +29,7 @@
 #include <QRectF>
 #include <QDragMoveEvent>
 #include <QTransform>
+#include <QBitmap>
 
 #include "math.h"
 
@@ -52,6 +53,14 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_MJItem->setGraphicsEffect(m_MJEffect);
     this->setDragMode(QGraphicsView::ScrollHandDrag);
 
+    m_CrossStartItem = new QGraphicsEllipseItem(-5,-5,10,10,0,scene);
+    m_CrossStartItem->setBrush(QBrush(Qt::blue));
+    m_CrossStartItem->setVisible(false);
+    m_CrossStartItem->setOpacity(0.6);
+
+    m_DistanceLineItem = new QGraphicsLineItem(0,scene);
+    m_DistanceLineItem->setVisible(false);
+    m_DistanceLineItem->setPen(QPen(QBrush(QColor(0,0,255,100)),5,Qt::DotLine,Qt::RoundCap));
 }
 
 RadiographWidget::~RadiographWidget() {
@@ -100,6 +109,11 @@ void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
         trans.translate(bounds.width()/-2,bounds.height()/-2);
         m_PixItem->setTransform(trans,true);
         m_mouseStartPoint = event->pos();
+
+    } else if(event->buttons() == Qt::RightButton) {
+        QLineF line(m_CrossStartItem->pos(),this->mapToScene(event->pos()));
+        m_DistanceLineItem->setLine(line);
+        messageUpdate(tr("Length is: %1 pixels").arg(line.length()),3000);
     } else {
         QGraphicsView::mouseMoveEvent(event);
     }
@@ -109,6 +123,13 @@ void RadiographWidget::mousePressEvent(QMouseEvent *event) {
     if(event->buttons() == Qt::MiddleButton) {
         m_mouseStartPoint = event->pos();
         this->viewport()->setCursor(QCursor(Qt::SizeAllCursor));
+    } else if(event->buttons() == Qt::RightButton) {
+        m_CrossStartItem->setPos(this->mapToScene(event->pos()));
+        m_CrossStartItem->setVisible(true);
+        this->viewport()->setCursor(QCursor(Qt::CrossCursor));
+        QLineF line(m_CrossStartItem->pos(),m_CrossStartItem->pos());
+        m_DistanceLineItem->setLine(line);
+        m_DistanceLineItem->setVisible(true);
     } else {
         QGraphicsView::mousePressEvent(event);
     }
@@ -116,6 +137,8 @@ void RadiographWidget::mousePressEvent(QMouseEvent *event) {
 
 void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
     this->viewport()->setCursor(QCursor(Qt::OpenHandCursor));
+    m_CrossStartItem->setVisible(false);
+    m_DistanceLineItem->setVisible(false);
     QGraphicsView::mouseReleaseEvent(event);
 }
 

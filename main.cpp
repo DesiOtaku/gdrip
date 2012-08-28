@@ -23,7 +23,6 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    a.setGraphicsSystem("opengl");
     a.setApplicationName("GNU Dental Radiograph Image Program");
     MainWindow w;
     w.show();

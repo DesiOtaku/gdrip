@@ -24,6 +24,7 @@
 #include <QPixmap>
 #include <QGraphicsView>
 #include <QGraphicsOpacityEffect>
+#include <QGraphicsEllipseItem>
 
 namespace Ui {
 class RadiographWidget;
@@ -58,6 +59,8 @@ signals:
 private:
     Ui::RadiographWidget *ui;
     QGraphicsPixmapItem *m_PixItem;
+    QGraphicsEllipseItem *m_CrossStartItem;
+    QGraphicsLineItem *m_DistanceLineItem;
     QGraphicsRectItem *m_MJItem;
     QGraphicsOpacityEffect *m_MJEffect;
     QPoint m_mouseStartPoint;
