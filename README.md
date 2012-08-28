@@ -8,9 +8,7 @@ Carries detection todo List:
 - Use http://free.pages.at/easyfilter/bresenham.html for the Bézier curve
 
 General function todo List:
-- Add mesure function (by pixels I guess)
 - Sharpen
 - Undo/redo stack
 - Reduce noise
 - Edge enhance
-- Mouse scrolling
