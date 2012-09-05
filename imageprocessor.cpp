@@ -181,6 +181,80 @@ QVector<int> ImageProcessor::findOcculsion(QImage input) {
     return returnMe;
 }
 
+QVector<QPoint> ImageProcessor::findOcculsionFaster(QImage input) {
+    int radius = (int) (.1 * input.height());
+    //qDebug()<<"radius: " <<radius;
+
+    //left side
+    int bestLeftY=0;
+    int bestLeftYval=INT_MAX;
+    for(int currentY=radius;currentY<input.height()-radius;currentY++) {
+        int sum =0;
+        foreach(int x,ImageProcessor::regionVals(0,currentY,radius,input)) {
+            sum+=x;
+        }
+
+        if(sum < bestLeftYval) {
+            bestLeftY = currentY;
+            bestLeftYval = sum;
+        }
+    }
+
+    //right side
+    int bestRightY=0;
+    int bestRightYval=INT_MAX;
+    for(int currentY=radius;currentY<input.height()-radius;currentY++) {
+        int sum =0;
+        foreach(int x,ImageProcessor::regionVals(input.width()-1,currentY,radius,input)) {
+            sum+=x;
+        }
+        //qDebug()<<"Sum was: " <<sum;
+
+        if(sum < bestRightYval) {
+            bestRightY = currentY;
+            bestRightYval = sum;
+        }
+    }
+
+    int yPen = bestLeftY;
+
+    QVector<QPoint> returnMe;
+
+    for(int x=0;x<input.width();x++) { //go from left to right
+        int diff = bestRightY - yPen;
+        if(qAbs(diff) == (input.width() - x)) {
+            int movementDir = qAbs(diff)/diff; //+1 or -1 to push it in the right direction
+            yPen += movementDir;
+        } else {
+            float penUpTotal= ImageProcessor::calculateCenterValue(input,x,yPen+1);
+            float penRightTotal=ImageProcessor::calculateCenterValue(input,x,yPen);
+            float penDownTotal=ImageProcessor::calculateCenterValue(input,x,yPen-1);
+            float lowest = qMin(qMin(penUpTotal,penRightTotal),penDownTotal);
+
+            if(penUpTotal == lowest) {
+                yPen++;
+            } else if(penDownTotal == lowest) {
+                yPen--;
+            }
+        }
+        returnMe.append(QPoint(x,yPen));
+    }
+    return returnMe;
+
+}
+
+float ImageProcessor::calculateCenterValue(QImage input, int seeX, int seeY) {
+    float returnMe =0;
+
+    for(int y=0;y<input.height();y++) {
+        float distance = qMax((float)qAbs(y - seeY),(float).01);
+        float value = qRed(input.pixel(seeX,y));
+        returnMe+= value / distance;
+    }
+
+    return returnMe;
+}
+
 void ImageProcessor::drawBezier(int p0x, int p0y, int p2x,
                                 int p2y, int p1x, int p1y, QPainter *img) {
     for(float t = 0;t<1;t+= 0.0001) {
@@ -392,55 +466,94 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
 QImage ImageProcessor::findTeeth(QImage input) {
     QImage returnMe = equalizeHistogram(input);
 
-    QVector<int> occ = ImageProcessor::findOcculsion(returnMe);
+//    QVector<int> occ = ImageProcessor::findOcculsion(returnMe);
+//    returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
+//    QPainter p(&returnMe);
+//    /*ImageProcessor::drawBezier(
+//                occ.at(0),
+//                occ.at(1),
+//                occ.at(4),
+//                occ.at(5),
+//                occ.at(2),
+//                occ.at(3),
+//                &p
+//                );*/
+
+//    QVector<int> regVals = ImageProcessor::regValsBezier(
+//                occ.at(0),
+//                occ.at(1),
+//                occ.at(4),
+//                occ.at(5),
+//                occ.at(2),
+//                occ.at(3),
+//                3,
+//                returnMe
+//                );
+
+//    int sum=0;
+//    foreach(int i ,regVals) {
+//        sum+=i;
+//    }
+//    double average = ((double)sum) /  regVals.count();
+//    double variance=0;
+//    foreach(int i ,regVals) {
+//        int val = i-average;
+//        variance+= (val *val);
+//    }
+//    double standardDev =sqrt(variance / regVals.count());
+
+
+//    ImageProcessor::drawBezierDer(
+//                occ.at(0),
+//                occ.at(1),
+//                occ.at(4),
+//                occ.at(5),
+//                occ.at(2),
+//                occ.at(3),
+//                (int)(average + (2*standardDev)),
+//                &p
+//                );
+
+    QVector<QPoint> points = ImageProcessor::findOcculsionFaster(returnMe);
     returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
     QPainter p(&returnMe);
-    /*ImageProcessor::drawBezier(
-                occ.at(0),
-                occ.at(1),
-                occ.at(4),
-                occ.at(5),
-                occ.at(2),
-                occ.at(3),
-                &p
-                );*/
-
-    QVector<int> regVals = ImageProcessor::regValsBezier(
-                occ.at(0),
-                occ.at(1),
-                occ.at(4),
-                occ.at(5),
-                occ.at(2),
-                occ.at(3),
-                3,
-                returnMe
-                );
+//    foreach(QPoint point, points) {
+//        qDebug()<<point;
+//        p.fillRect(QRect(point,QSize(1,1)),QColor(255,0,0));
+//    }
 
     int sum=0;
-    foreach(int i ,regVals) {
-        sum+=i;
+    foreach(QPoint point, points) {
+        sum += qRed(returnMe.pixel(point));
     }
-    double average = ((double)sum) /  regVals.count();
-    double variance=0;
-    foreach(int i ,regVals) {
-        int val = i-average;
-        variance+= (val *val);
+    int average = sum / points.count();
+    int variance =0;
+    foreach(QPoint point, points) {
+        int addMeSquare = qRed(returnMe.pixel(point))  - average;
+        variance += (addMeSquare*addMeSquare);
     }
-    double standardDev =sqrt(variance / regVals.count());
+    double standardDev =sqrt(variance / points.count());
 
 
-    ImageProcessor::drawBezierDer(
-                occ.at(0),
-                occ.at(1),
-                occ.at(4),
-                occ.at(5),
-                occ.at(2),
-                occ.at(3),
-                (int)(average + (2*standardDev)),
-                &p
-                );
+    QVector<QLine> lines = ImageProcessor::findEnamel(input,points, average + (2 * standardDev));
 
+    return returnMe;
+}
 
+QVector<QLine> ImageProcessor::findEnamel(QImage input, QVector<QPoint> points, int cutOff) {
+    QVector<QLine> returnMe;
+    foreach(QPoint point, points) {
+        //first go up
+        bool moveOn = true;
+        for(int y=point.y();(y<input.height()) && moveOn;y++) {
+            if(qRed(input.pixel(point.x(),y)) > cutOff) {
+                moveOn = false;
+                returnMe.append(QLine(point,QPoint(point.x(),y)));
+            }
+        }
+
+        //now move down
+    }
 
     return returnMe;
 }
