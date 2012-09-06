@@ -517,10 +517,6 @@ QImage ImageProcessor::findTeeth(QImage input) {
     QVector<QPoint> points = ImageProcessor::findOcculsionFaster(returnMe);
     returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
     QPainter p(&returnMe);
-//    foreach(QPoint point, points) {
-//        qDebug()<<point;
-//        p.fillRect(QRect(point,QSize(1,1)),QColor(255,0,0));
-//    }
 
     int sum=0;
     foreach(QPoint point, points) {
@@ -535,7 +531,16 @@ QImage ImageProcessor::findTeeth(QImage input) {
     double standardDev =sqrt(variance / points.count());
 
 
-    QVector<QLine> lines = ImageProcessor::findEnamel(input,points, average + (2 * standardDev));
+    QVector<QLine> lines = ImageProcessor::findEnamel(input,points, average + (5 * standardDev));
+    p.setPen(QPen(QColor(255,0,0)));
+
+    foreach(QLine line, lines) {
+        p.drawLine(line);
+    }
+
+    foreach(QPoint point, points) {
+        p.fillRect(QRect(point,QSize(1,1)),QColor(0,255,0));
+    }
 
     return returnMe;
 }
@@ -553,6 +558,13 @@ QVector<QLine> ImageProcessor::findEnamel(QImage input, QVector<QPoint> points, 
         }
 
         //now move down
+        moveOn = true;
+        for(int y=point.y();(y>0) && moveOn;y--) {
+            if(qRed(input.pixel(point.x(),y)) > cutOff) {
+                moveOn = false;
+                returnMe.append(QLine(point,QPoint(point.x(),y)));
+            }
+        }
     }
 
     return returnMe;
