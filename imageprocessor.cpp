@@ -532,9 +532,16 @@ QImage ImageProcessor::findTeeth(QImage input) {
 
 
     QVector<QLine> lines = ImageProcessor::findEnamel(input,points, average + (5 * standardDev));
-    p.setPen(QPen(QColor(255,0,0)));
+    QVector<QLine> inter = ImageProcessor::findInterProximal(input,points, average + (5 * standardDev));
 
+
+    p.setPen(QPen(QColor(255,0,0,100)));
     foreach(QLine line, lines) {
+        p.drawLine(line);
+    }
+
+    p.setPen(QPen(QColor(0,0,255)));
+    foreach(QLine line, inter) {
         p.drawLine(line);
     }
 
@@ -566,6 +573,47 @@ QVector<QLine> ImageProcessor::findEnamel(QImage input, QVector<QPoint> points, 
             }
         }
     }
+
+    return returnMe;
+}
+
+QVector<QLine> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> points, int cutOff) {
+    QVector<QLine> returnMe;
+
+    /*int strikes =(int) ((.01) * input.height());
+    int minWidth = (int) ((.01) * input.width());
+
+    foreach(QPoint point, points) {
+        //first go up
+        int postBlackWhiteCount=0;
+        int postWhiteBlackCount=0;
+        bool moveOn = true;
+        for(int y=point.y();(y<input.height()) && moveOn;y++) {
+            if(qRed(input.pixel(point.x(),y)) > cutOff) { //white
+                if(foundBlack) {
+                    moveOn = false;
+                    returnMe.append(QLine(point,QPoint(point.x(),y)));
+                } else {
+                    foundWhite = true;
+                }
+            } else { //black
+
+            }
+        }
+
+        //now move down
+        moveOn = true;
+        for(int y=point.y();(y>0) && moveOn;y--) {
+            if(qRed(input.pixel(point.x(),y)) > cutOff) {
+                if(foundFirst) {
+                    moveOn = false;
+                    returnMe.append(QLine(point,QPoint(point.x(),y)));
+                } else {
+                    foundFirst = true;
+                }
+            }
+        }
+    }*/
 
     return returnMe;
 }

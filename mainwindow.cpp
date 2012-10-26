@@ -27,6 +27,7 @@
 #include <QDropEvent>
 #include <QUrl>
 #include <QSettings>
+#include <QFileInfo>
 
 #include "aboutdialog.h"
 #include "imageprocessor.h"
@@ -112,11 +113,19 @@ void MainWindow::openImage(QString fileName) {
 
 void MainWindow::openImage() {
 
+    QSettings settings("Tej A. Shah", "gdrip");
+
+
+    QString startDir = settings.value("lastFolder",QDir::homePath()).toString();
+
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open Image"),
-                                                    QDir::homePath(),
+                                                    startDir,
                                                     tr("Image Files (*.png *.jpg *.jpeg *.bmp)"));
-    if(QFile::exists(fileName)) {
+    QFileInfo fileInstance(fileName);
+
+    if(fileInstance.exists()) {
         openImage(fileName);
+        settings.setValue("lastFolder", fileInstance.dir().absoluteFilePath(fileName));
     }
 }
 

@@ -12,3 +12,5 @@ General function todo List:
 - Undo/redo stack
 - Reduce noise
 - Edge enhance
+- Be able to "mark" locations like "this place is where you have the carries"
+- Have a "reference" pic for patients to see exactly what is wrong
