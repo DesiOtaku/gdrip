@@ -102,6 +102,14 @@ void MainWindow::openImage(QString fileName) {
     m_original.load(fileName);
     m_current = m_original;
 
+    qDebug()<<m_original.dotsPerMeterX();
+    qDebug()<<m_original.dotsPerMeterY();
+
+    foreach(QString key, m_original.textKeys()) {
+        qDebug()<<key<<": "<< m_original.text(key);
+    }
+
+
     ui->radioImageWidget->setImage(m_original);
     ui->histoWidget->setProcessImage(m_original);
 
