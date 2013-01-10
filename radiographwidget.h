@@ -52,7 +52,7 @@ public:
     //When doing the anaylsis, it would be nice to have this added in
     void addLine(QLine line, QColor color);
     void addCircle(QPoint point, float radius, QColor color);
-    void addDots(QVector<QPoint> points, QColor color);
+    void addDot(QPoint point, QColor color);
 
 
     //When the user does stuff with the mouse

@@ -50,6 +50,7 @@ public slots:
 
     void handleStartOver();
     void handleSaveImage();
+    void handleFindTeeth();
     
 private:
     Ui::MainWindow *ui;

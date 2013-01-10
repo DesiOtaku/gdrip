@@ -180,7 +180,9 @@ void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
     } else if(event->buttons() == Qt::RightButton) {
         QLineF line(m_CrossStartItem->pos(),this->mapToScene(event->pos()));
         m_DistanceLineItem->setLine(line);
-        messageUpdate(tr("Length is: %1 pixels").arg(line.length()),3000);
+        qreal ppmm = m_Original.dotsPerMeterX()/1000.0;
+        qreal length = 1.0/(ppmm/ line.length());
+        messageUpdate(tr("Length is: %1 mm").arg(length),3000);
     } else if(event->buttons() == Qt::LeftButton) {
         QGraphicsView::mouseMoveEvent(event);
     } else {
@@ -193,7 +195,7 @@ void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
             valueHigh = qMax(0,valueHigh);
             valueHigh = qMin(255,valueHigh);
             pixelValueHighlighted(valueHigh);
-            messageUpdate(tr("Point is: %1").arg(valueHigh),1000);
+            //messageUpdate(tr("Point value is: %1").arg(valueHigh),1000);
         }
     }
 }
@@ -222,10 +224,38 @@ void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void RadiographWidget::reset() {
+    foreach(QGraphicsLineItem *item, m_Marklines) {
+        this->scene()->removeItem(item);
+        delete item;
+    }
+    m_Marklines.clear();
+
+    foreach(QGraphicsRectItem *item, m_Markdots) {
+        this->scene()->removeItem(item);
+        delete item;
+    }
+    m_Markdots.clear();
+
+
     QTransform trans;
     m_PixItem->setTransform(trans);
     this->resetMatrix();
     this->setImage(m_Original);
+}
+
+void RadiographWidget::addLine(QLine line, QColor color) {
+    QGraphicsLineItem *newLine = new QGraphicsLineItem(line);
+    newLine->setPen(QPen(QBrush(color),1,Qt::SolidLine,Qt::RoundCap));
+    m_Marklines.append(newLine);
+    this->scene()->addItem(newLine);
+}
+
+void RadiographWidget::addDot(QPoint point, QColor color) {
+    QGraphicsRectItem *newItem = new QGraphicsRectItem(point.x(), point.y(), 1, 1);
+    newItem->setBrush(QBrush(color));
+    newItem->setPen(QPen(QBrush(color),1,Qt::SolidLine,Qt::RoundCap));
+    this->scene()->addItem(newItem);
+    m_Markdots.append(newItem);
 }
 
 void RadiographWidget::updateHistogram() {

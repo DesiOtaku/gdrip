@@ -466,69 +466,21 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
     }
 }
 
-QImage ImageProcessor::findTeeth(QImage input) {
-    QImage returnMe = equalizeHistogram(input);
-
-//    QVector<int> occ = ImageProcessor::findOcculsion(returnMe);
-//    returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
-//    QPainter p(&returnMe);
-//    /*ImageProcessor::drawBezier(
-//                occ.at(0),
-//                occ.at(1),
-//                occ.at(4),
-//                occ.at(5),
-//                occ.at(2),
-//                occ.at(3),
-//                &p
-//                );*/
-
-//    QVector<int> regVals = ImageProcessor::regValsBezier(
-//                occ.at(0),
-//                occ.at(1),
-//                occ.at(4),
-//                occ.at(5),
-//                occ.at(2),
-//                occ.at(3),
-//                3,
-//                returnMe
-//                );
-
-//    int sum=0;
-//    foreach(int i ,regVals) {
-//        sum+=i;
-//    }
-//    double average = ((double)sum) /  regVals.count();
-//    double variance=0;
-//    foreach(int i ,regVals) {
-//        int val = i-average;
-//        variance+= (val *val);
-//    }
-//    double standardDev =sqrt(variance / regVals.count());
+QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
+    QImage useMe = equalizeHistogram(input);
+    //useMe = constrastImage(input,65);
 
 
-//    ImageProcessor::drawBezierDer(
-//                occ.at(0),
-//                occ.at(1),
-//                occ.at(4),
-//                occ.at(5),
-//                occ.at(2),
-//                occ.at(3),
-//                (int)(average + (2*standardDev)),
-//                &p
-//                );
-
-    QVector<QPoint> points = ImageProcessor::findOcculsionFaster(returnMe);
-    returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
-    QPainter p(&returnMe);
+    QVector<QPoint> points = ImageProcessor::findOcculsionFaster(useMe);
 
     int sum=0;
     foreach(QPoint point, points) {
-        sum += qRed(returnMe.pixel(point));
+        sum += qRed(useMe.pixel(point));
     }
     int average = sum / points.count();
     int variance =0;
     foreach(QPoint point, points) {
-        int addMeSquare = qRed(returnMe.pixel(point))  - average;
+        int addMeSquare = qRed(useMe.pixel(point))  - average;
         variance += (addMeSquare*addMeSquare);
     }
     double standardDev =sqrt(variance / points.count());
@@ -538,18 +490,14 @@ QImage ImageProcessor::findTeeth(QImage input) {
     QVector<QLine> inter = ImageProcessor::findInterProximal(input,points, average + (5 * standardDev));
 
 
-    p.setPen(QPen(QColor(255,0,0,100)));
-    foreach(QLine line, lines) {
-        p.drawLine(line);
-    }
-
-    p.setPen(QPen(QColor(0,0,255)));
-    foreach(QLine line, inter) {
-        p.drawLine(line);
-    }
+    QVector<QVariant> returnMe;
 
     foreach(QPoint point, points) {
-        p.fillRect(QRect(point,QSize(1,1)),QColor(0,255,0));
+        returnMe.append(point);
+    }
+
+    foreach(QLine line, lines) {
+        returnMe.append(line);
     }
 
     return returnMe;

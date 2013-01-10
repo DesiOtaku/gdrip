@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //    connect(ui->actionFind_Background,SIGNAL(triggered()),
 //            this,SLOT(handleFindBack()));
     connect(ui->actionSave_Image,SIGNAL(triggered()),this,SLOT(handleSaveImage()));
-//    connect(ui->actionFind_Teeth,SIGNAL(triggered()),this,SLOT(handleFindTeeth()));
+    connect(ui->actionFind_Teeth,SIGNAL(triggered()),this,SLOT(handleFindTeeth()));
     connect(ui->actionMirrorVer,SIGNAL(triggered()),ui->radioImageWidget,SLOT(mirrorV()));
     connect(ui->actionMirror_Horizontally,SIGNAL(triggered()),ui->radioImageWidget,SLOT(mirrorH()));
     connect(ui->actionInvert_Image,SIGNAL(triggered()), ui->radioImageWidget,SLOT(invertImg()));
@@ -145,3 +145,17 @@ void MainWindow::handleSaveImage() {
     this->statusBar()->showMessage(tr("Image has been saved to \"%1\"").arg(fileName),3000);
 }
 
+
+void MainWindow::handleFindTeeth() {
+    this->statusBar()->showMessage(tr("Finding Teeth"),3000);
+    QVector<QVariant> drawMe = ImageProcessor::findTeeth(ui->radioImageWidget->getOriginalImage());
+    this->statusBar()->showMessage(tr("Found Teeth"),3000);
+    foreach(QVariant var, drawMe) {
+        if(var.type() == QVariant::Line) {
+            ui->radioImageWidget->addLine(var.toLine(),QColor(255,0,0,100));
+        } else if(var.type() == QVariant::Point) {
+            ui->radioImageWidget->addDot(var.toPoint(),QColor(0,255,0,100));
+        }
+    }
+    this->statusBar()->showMessage(tr("Drawing Teeth"),3000);
+}

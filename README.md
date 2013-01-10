@@ -6,7 +6,6 @@ Carries detection todo List:
 - Try finding the boundry of the enamel for the first tooth and then follow it
 - Use http://free.pages.at/easyfilter/bresenham.html for the Bézier curve
 - Edge detection via "chunks" in differences
-- Use proper PPI for length
 
 General function todo List:
 - Sharpen

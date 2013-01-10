@@ -22,6 +22,7 @@
 #include <QObject>
 #include <QImage>
 #include <QPainter>
+#include "radiographwidget.h"
 
 /**
  * @brief The ImageProcessor class
@@ -33,20 +34,22 @@ class ImageProcessor : public QObject
 public:
     explicit ImageProcessor(QObject *parent = 0);
     
+    //Basic image editing
     static QImage equalizeHistogram(QImage input);
-
-    static QImage drawOcculsion(QImage input);
-    static QVector<float> findOccurrences(QImage input, int offset=0);
-
-    static QImage findBackground(QImage input);
-    static QImage findTeeth(QImage input);
-
-    static QImage brightenImage(QImage original, int amount);
+    static QImage brightenImage(QImage original, int amount); //not really used.. but kept just in case
     static QImage constrastImage(QImage original, int amount);
     static QImage invertImage(QImage input);
-    static QImage spreadHistogram(QImage input);
-    static QImage mirrorVertically(QImage input);
-    static QImage mirrorHorizontally(QImage input);
+    static QImage spreadHistogram(QImage input); //not really used.. but kept just in case
+    static QImage mirrorVertically(QImage input); //not really used.. but kept just in case
+    static QImage mirrorHorizontally(QImage input); //not really used.. but kept just in case
+
+    //Quick helpers
+    static QVector<float> findOccurrences(QImage input, int offset=0);
+
+    //Research functions
+    static QImage drawOcculsion(QImage input);
+    static QImage findBackground(QImage input);
+    static QVector<QVariant> findTeeth(QImage input);
 
     
 private:
