@@ -507,6 +507,9 @@
    <property name="toolTip">
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Find Teeth&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning&lt;/span&gt;: Don't use if you don't know how it works&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+T</string>
+   </property>
   </action>
   <action name="actionDraw_Occulsion">
    <property name="text">

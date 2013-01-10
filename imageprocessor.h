@@ -48,7 +48,6 @@ public:
     static QImage mirrorVertically(QImage input);
     static QImage mirrorHorizontally(QImage input);
 
-
     
 private:
     static QImage thresholdImage(QImage input, int cutoff);
@@ -57,6 +56,7 @@ private:
     static QVector<QPoint> findOcculsionFaster(QImage input);
     static float calculateCenterValue(QImage input,int seeX,int seeY);
     static QVector<QLine> findEnamel(QImage input, QVector<QPoint> points, int cutOff);
+    static QVector<QLine> findInterProximal(QImage input, QVector<QPoint> points, int cutOff);
     static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
                                 int p1x,int p1y, int stDev, QPainter *input);
     static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,
