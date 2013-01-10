@@ -37,11 +37,25 @@ class RadiographWidget;
 class RadiographWidget : public QGraphicsView
 {
     Q_OBJECT
+    Q_PROPERTY (float zoom WRITE setZoom)
     
 public:
     explicit RadiographWidget(QWidget *parent = 0);
-    void setImage(QImage img);
     ~RadiographWidget();
+
+    QImage getOriginalImage();
+    QImage getAlteredImage();
+    QImage getMarkedImage();
+
+    void setImage(QImage img);
+
+    //When doing the anaylsis, it would be nice to have this added in
+    void addLine(QLine line, QColor color);
+    void addCircle(QPoint point, float radius, QColor color);
+    void addDots(QVector<QPoint> points, QColor color);
+
+
+    //When the user does stuff with the mouse
     void mouseMoveEvent(QMouseEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
@@ -50,22 +64,51 @@ public slots:
     void setZoom(int newZoom);
     void setRotation(int angle);
     void setBrightness(int amount);
-    void resetView();
+    void setContrast(int amount);
+    void invertImg();
+    void equalizeImg();
+    void strechHisto();
+    void mirrorV();
+    void mirrorH();
+    void reset();
 
 signals:
     void messageUpdate(QString message,int timeout);
+    void newHistogram(QVector<float> values);
+    void pixelValueHighlighted(int value);
 
 
 private:
     Ui::RadiographWidget *ui;
+
+    //The image itself
+    QImage m_Original;
+    QImage m_NonContrastedImg;
+    QImage m_ContrastedImg;
     QGraphicsPixmapItem *m_PixItem;
+
+    //Keeping track of user input when we do crazy things
+    int m_BrightnessSet;
+    int m_ContrastSet;
+
+    //Relating to single measurement
     QGraphicsEllipseItem *m_CrossStartItem;
     QGraphicsLineItem *m_DistanceLineItem;
-    QGraphicsRectItem *m_MJItem;
-    QGraphicsOpacityEffect *m_MJEffect;
     QPoint m_mouseStartPoint;
 
-    int m_Rotation;
+    //TODO: Angle measurement + line displacement
+
+    //Brightness adjustment (named after a famous pop star)
+    QGraphicsRectItem *m_MJItem;
+    QGraphicsOpacityEffect *m_MJEffect;
+
+    //Line and circle markings
+    QVector<QGraphicsLineItem *> m_Marklines;
+    QVector<QGraphicsEllipseItem *> m_Markcircles;
+    QVector<QGraphicsRectItem *> m_Markdots;
+
+    //Private functions
+    void updateHistogram();
 };
 
 #endif // RADIOGRAPHWIDGET_H

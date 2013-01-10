@@ -51,15 +51,18 @@ QImage ImageProcessor::equalizeHistogram(QImage input) {
     return returnMe;
 }
 
-QVector<float> ImageProcessor::findOccurrences(QImage input) {
+QVector<float> ImageProcessor::findOccurrences(QImage input, int offset) {
     QVector<float> returnMe;
     returnMe.fill(0,256);
     float single = 1.0 / (input.width() * input.height());
 
     for(int x=0;x<input.width();x++) {
         for(int y=0;y<input.height();y++) {
-            float newVal = returnMe.value(qRed(input.pixel(x,y)))+single;
-            returnMe.replace(qRed(input.pixel(x,y)),newVal);
+            int pixelIndex = qRed(input.pixel(x,y)) + offset;
+            pixelIndex = qMax(pixelIndex,0);
+            pixelIndex = qMin(pixelIndex,255);
+            float newVal = returnMe.value(pixelIndex)+single;
+            returnMe.replace(pixelIndex,newVal);
         }
     }
 

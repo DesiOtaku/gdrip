@@ -28,6 +28,7 @@ HistoWidget::HistoWidget(QWidget *parent) :
     QWidget(parent)
 {
     setMouseTracking(true);
+    m_HighlightValue=0;
 }
 
 /**
@@ -37,8 +38,8 @@ HistoWidget::HistoWidget(QWidget *parent) :
  * @param img
  * The image that the histogram should be based on
  */
-void HistoWidget::setProcessImage(QImage img) {
-    m_Occ = ImageProcessor::findOccurrences(img);
+void HistoWidget::setHistogram(QVector<float> values) {
+    m_Occ = values;
 
     float max =0;
     for(int i=0;i<m_Occ.count();i++) {
@@ -54,6 +55,11 @@ void HistoWidget::setProcessImage(QImage img) {
     this->repaint();
 }
 
+void HistoWidget::highlightValue(int value) {
+    m_HighlightValue = value;
+    this->repaint();
+}
+
 /**
  * @brief HistoWidget::paintEvent
  * Overloading the paint event to draw the histogram
@@ -65,7 +71,15 @@ void HistoWidget::paintEvent(QPaintEvent *) {
     for(int i=0;i<256;i++) {
         float fraction =  m_Occ.value(i);
         int length =(int) this->height()*fraction;
+
+        if(i == m_HighlightValue) {
+            p.setPen(QColor(255,70,40));
+            p.drawLine(i,this->height(),i,0);
+            p.setPen(QColor(70,70,40));
+        }
+
         p.drawLine(i,this->height(),i,this->height()-length);
+
     }
 
 }

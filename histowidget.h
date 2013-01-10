@@ -33,11 +33,15 @@ class HistoWidget : public QWidget
 public:
     explicit HistoWidget(QWidget *parent = 0);
     void paintEvent(QPaintEvent *);
-    void setProcessImage(QImage img);
     void mouseMoveEvent(QMouseEvent *event);
+
+public slots:
+    void highlightValue(int value);
+    void setHistogram(QVector<float> values);
 
 private:
     QVector<float> m_Occ;
+    int m_HighlightValue;
     
 };
 

@@ -48,25 +48,11 @@ public slots:
     void openImage();
     void showAbout();
 
-    void handleEqualize();
     void handleStartOver();
-    void handleDrawOcc();
-    void handleFindBack();
     void handleSaveImage();
-    void handleFindTeeth();
-    void handleBrighten(int amount);
-    void handleContrast(int amount);
-    void handleMirrorVert();
-    void handleMirrorHorizont();
-    void handleInvertImage();
-    void handleStrechHisto();
-
-
     
 private:
     Ui::MainWindow *ui;
-    QImage m_current;
-    QImage m_original;
 
 };
 

@@ -36,7 +36,7 @@ public:
     static QImage equalizeHistogram(QImage input);
 
     static QImage drawOcculsion(QImage input);
-    static QVector<float> findOccurrences(QImage input);
+    static QVector<float> findOccurrences(QImage input, int offset=0);
 
     static QImage findBackground(QImage input);
     static QImage findTeeth(QImage input);
