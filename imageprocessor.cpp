@@ -467,8 +467,8 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
 }
 
 QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
-    QImage useMe = equalizeHistogram(input);
-    //useMe = constrastImage(input,65);
+    //QImage useMe = equalizeHistogram(input);
+    QImage useMe = constrastImage(input,65);
 
 
     QVector<QPoint> points = ImageProcessor::findOcculsionFaster(useMe);
@@ -485,9 +485,12 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     }
     double standardDev =sqrt(variance / points.count());
 
+    qDebug()<<"Average: "<< average;
+    qDebug()<<"StDev: "<< standardDev;
 
-    QVector<QLine> lines = ImageProcessor::findEnamel(input,points, average + (5 * standardDev));
-    QVector<QLine> inter = ImageProcessor::findInterProximal(input,points, average + (5 * standardDev));
+
+    QVector<QLine> lines = ImageProcessor::findEnamel(useMe,points, average + (5 * standardDev));
+    QVector<QLine> inter = ImageProcessor::findInterProximal(useMe,points, average + (5 * standardDev));
 
 
     QVector<QVariant> returnMe;
