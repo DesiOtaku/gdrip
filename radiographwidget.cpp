@@ -253,7 +253,7 @@ void RadiographWidget::addLine(QLine line, QColor color) {
 void RadiographWidget::addDot(QPoint point, QColor color) {
     QGraphicsRectItem *newItem = new QGraphicsRectItem(point.x(), point.y(), 1, 1);
     newItem->setBrush(QBrush(color));
-    newItem->setPen(QPen(QBrush(color),1,Qt::SolidLine,Qt::RoundCap));
+    newItem->setPen(QPen(Qt::NoPen));
     this->scene()->addItem(newItem);
     m_Markdots.append(newItem);
 }
@@ -274,5 +274,20 @@ QImage RadiographWidget::getAlteredImage() {
 
 QImage RadiographWidget::getMarkedImage() {
     //TODO: add in the markings to the QImage
-    return m_ContrastedImg;
+    QImage returnMe(m_ContrastedImg.size(),QImage::Format_ARGB32);
+
+    for(int x=0;x<returnMe.width();x++) {
+        for(int y=0;y<returnMe.height();y++) {
+            int val = qRed(m_ContrastedImg.pixel(x,y));
+            returnMe.setPixel(x,y,qRgb(val,val,val));
+        }
+    }
+
+    foreach(QGraphicsRectItem *item, m_Markdots) {
+        returnMe.setPixel((int)item->rect().topLeft().x(),
+                          (int)item->rect().topLeft().y(),
+                          item->brush().color().rgba());
+    }
+
+    return returnMe;
 }

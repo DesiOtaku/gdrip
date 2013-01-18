@@ -66,7 +66,8 @@ void HistoWidget::highlightValue(int value) {
  */
 void HistoWidget::paintEvent(QPaintEvent *) {
     QPainter p(this);
-    p.setPen(QColor(70,70,40));
+    QColor histoColor(70,70,40,150);
+    p.setPen(histoColor);
 
     for(int i=0;i<256;i++) {
         float fraction =  m_Occ.value(i);
@@ -75,11 +76,9 @@ void HistoWidget::paintEvent(QPaintEvent *) {
         if(i == m_HighlightValue) {
             p.setPen(QColor(255,70,40));
             p.drawLine(i,this->height(),i,0);
-            p.setPen(QColor(70,70,40));
+            p.setPen(histoColor);
         }
-
         p.drawLine(i,this->height(),i,this->height()-length);
-
     }
 
 }

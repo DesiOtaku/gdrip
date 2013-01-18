@@ -467,9 +467,8 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
 }
 
 QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
-    QImage useMe = equalizeHistogram(input);
-    //useMe = constrastImage(input,65);
-
+    //QImage useMe = equalizeHistogram(input);
+    QImage useMe = constrastImage(input,65);
 
     QVector<QPoint> points = ImageProcessor::findOcculsionFaster(useMe);
 
@@ -485,20 +484,33 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     }
     double standardDev =sqrt(variance / points.count());
 
+    qDebug()<<"Average: "<<average;
+    qDebug()<<"StDev: "<<standardDev;
 
-    QVector<QLine> lines = ImageProcessor::findEnamel(input,points, average + (5 * standardDev));
-    QVector<QLine> inter = ImageProcessor::findInterProximal(input,points, average + (5 * standardDev));
+
+    //QVector<QLine> lines = ImageProcessor::findEnamel(useMe,points, average + (5 * standardDev));
+    //QVector<QLine> inter = ImageProcessor::findInterProximal(useMe,points, average + (5 * standardDev));
 
 
     QVector<QVariant> returnMe;
 
-    foreach(QPoint point, points) {
-        returnMe.append(point);
+    int cutoff = average + (5 * standardDev);
+    for(int x=0;x<useMe.width();x++) {
+        for(int y=0;y<useMe.height();y++) {
+            int val = qRed(useMe.pixel(x,y));
+            if(val <= cutoff) {
+                returnMe.append(QPoint(x,y));
+            }
+        }
     }
 
-    foreach(QLine line, lines) {
-        returnMe.append(line);
-    }
+//    foreach(QPoint point, points) {
+//        returnMe.append(point);
+//    }
+
+//    foreach(QLine line, lines) {
+//        returnMe.append(line);
+//    }
 
     return returnMe;
 }
@@ -509,6 +521,7 @@ QVector<QLine> ImageProcessor::findEnamel(QImage input, QVector<QPoint> points, 
         //first go up
         bool moveOn = true;
         for(int y=point.y();(y<input.height()) && moveOn;y++) {
+            //qDebug()<<qRed(input.pixel(point.x(),y));
             if(qRed(input.pixel(point.x(),y)) > cutOff) {
                 moveOn = false;
                 returnMe.append(QLine(point,QPoint(point.x(),y)));
@@ -616,17 +629,8 @@ QImage ImageProcessor::constrastImage(QImage original, int amount) {
 }
 
 QImage ImageProcessor::invertImage(QImage input) {
-    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
-    QPainter painter(&returnMe);
-
-    for(int x=0;x<input.width();x++) {
-        for(int y=0;y<input.height();y++) {
-            int value = qRed(input.pixel(x,y));
-            int newValue = 255 - value;
-            painter.fillRect(x,y,1,1,QColor(newValue,newValue,newValue));
-        }
-    }
-
+    QImage returnMe(input);
+    returnMe.invertPixels();
     return returnMe;
 
 }
