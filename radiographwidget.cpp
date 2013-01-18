@@ -85,14 +85,31 @@ void RadiographWidget::setImage(QImage img) {
     m_MJItem->setRect(m_PixItem->boundingRect());
     newHistogram(ImageProcessor::findOccurrences(m_Original));
 
+    foreach(QGraphicsLineItem *item, m_Marklines) {
+        this->scene()->removeItem(item);
+        delete item;
+    }
+    m_Marklines.clear();
+
+    foreach(QGraphicsRectItem *item, m_Markdots) {
+        this->scene()->removeItem(item);
+        delete item;
+    }
+    m_Markdots.clear();
+
+
+    QTransform trans;
+    m_PixItem->setTransform(trans);
+    this->resetMatrix();
+
     QPropertyAnimation *ani = new QPropertyAnimation(this);
     ani->setTargetObject(this);
     ani->setPropertyName("zoom");
-    ani->setDuration(3000);
+    ani->setDuration(1000);
     ani->setStartValue(0);
     ani->setEndValue(50);
     QEasingCurve curve(QEasingCurve::OutElastic);
-    curve.setAmplitude(2);
+    curve.setAmplitude(1);
     ani->setEasingCurve(curve);
     ani->start(QAbstractAnimation::DeleteWhenStopped);
 }
@@ -224,22 +241,6 @@ void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void RadiographWidget::reset() {
-    foreach(QGraphicsLineItem *item, m_Marklines) {
-        this->scene()->removeItem(item);
-        delete item;
-    }
-    m_Marklines.clear();
-
-    foreach(QGraphicsRectItem *item, m_Markdots) {
-        this->scene()->removeItem(item);
-        delete item;
-    }
-    m_Markdots.clear();
-
-
-    QTransform trans;
-    m_PixItem->setTransform(trans);
-    this->resetMatrix();
     this->setImage(m_Original);
 }
 
