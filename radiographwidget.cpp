@@ -64,6 +64,11 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_CrossStartItem->setVisible(false);
     m_CrossStartItem->setOpacity(0.6);
 
+    m_CurveCrossStartItem  = new QGraphicsEllipseItem(-8,-8,10,10,0,scene);
+    m_CurveCrossStartItem->setBrush(QBrush(Qt::red));
+    m_CurveCrossStartItem->setVisible(false);
+    m_CurveCrossStartItem->setOpacity(0.6);
+
     m_DistanceLineItem = new QGraphicsLineItem(0,scene);
     m_DistanceLineItem->setVisible(false);
     m_DistanceLineItem->setPen(QPen(QBrush(QColor(0,0,255,100)),5,Qt::DotLine,Qt::RoundCap));
@@ -202,6 +207,24 @@ void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
         messageUpdate(tr("Length is: %1 mm").arg(length),3000);
     } else if(event->buttons() == Qt::LeftButton) {
         QGraphicsView::mouseMoveEvent(event);
+    } else if(m_CurveCrossStartItem->isVisible()) {
+        QPointF lastPoint = m_CurveDistanceLineItems.last()->line().p2();
+        QPointF newPoint = this->mapToScene(event->pos());
+        QLineF newLine(lastPoint,newPoint);
+        QGraphicsLineItem *newLineItem = new QGraphicsLineItem(newLine);
+        newLineItem->setPen(QPen(QBrush(QColor(255,0,0,100)),5,Qt::SolidLine,Qt::RoundCap));
+        this->scene()->addItem(newLineItem);
+        m_CurveDistanceLineItems.append(newLineItem);
+
+        qreal sumDistance =0;
+        foreach(QGraphicsLineItem *addItem,m_CurveDistanceLineItems) {
+            sumDistance+= addItem->line().length();
+        }
+
+        qreal ppmm = m_Original.dotsPerMeterX()/1000.0;
+        qreal length = 1.0/(ppmm/ sumDistance);
+        messageUpdate(tr("Length is: %1 mm").arg(length),3000);
+
     } else {
         QPointF scenepos = this->mapToScene(event->pos());
         QPointF po = m_PixItem->mapFromScene(scenepos);
@@ -238,6 +261,38 @@ void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
     m_CrossStartItem->setVisible(false);
     m_DistanceLineItem->setVisible(false);
     QGraphicsView::mouseReleaseEvent(event);
+}
+
+void RadiographWidget::keyPressEvent(QKeyEvent *event) {
+    if((event->key() == Qt::Key_C) && (!event->isAutoRepeat())) {
+        m_mouseCurveStartPoint = QPoint(); //it will be null
+        QPoint widgetPoint = this->mapFromGlobal(QCursor::pos());
+        m_CurveCrossStartItem->setPos(this->mapToScene(widgetPoint));
+        m_CurveCrossStartItem->setVisible(true);
+        this->viewport()->setCursor(QCursor(Qt::CrossCursor));
+        QLineF firstLine(m_CurveCrossStartItem->pos(),m_CurveCrossStartItem->pos());
+        QGraphicsLineItem *firstLineItem = new QGraphicsLineItem(firstLine);
+        firstLineItem->setPen(QPen(QBrush(QColor(255,0,0,100)),5,Qt::SolidLine,Qt::RoundCap));
+        m_CurveDistanceLineItems.append(firstLineItem);
+        this->scene()->addItem(firstLineItem);
+
+        //qDebug()<<
+    }
+    QGraphicsView::keyPressEvent(event);
+}
+
+void RadiographWidget::keyReleaseEvent(QKeyEvent *event) {
+    if((event->key() == Qt::Key_C) && (!event->isAutoRepeat())) {
+        m_CurveCrossStartItem->setVisible(false);
+        this->viewport()->setCursor(QCursor(Qt::OpenHandCursor));
+
+        foreach(QGraphicsLineItem *item,m_CurveDistanceLineItems) {
+            this->scene()->removeItem(item);
+            delete item;
+        }
+        m_CurveDistanceLineItems.clear();
+    }
+    QGraphicsView::keyReleaseEvent(event);
 }
 
 void RadiographWidget::reset() {

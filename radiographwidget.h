@@ -60,6 +60,10 @@ public:
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
 
+    //When the user smacks something on the keyboard
+    void keyPressEvent(QKeyEvent *event);
+    void keyReleaseEvent(QKeyEvent *event);
+
 public slots:
     void setZoom(int newZoom);
     void setRotation(int angle);
@@ -95,6 +99,11 @@ private:
     QGraphicsEllipseItem *m_CrossStartItem;
     QGraphicsLineItem *m_DistanceLineItem;
     QPoint m_mouseStartPoint;
+
+    //Relating to a single curved measurement
+    QGraphicsEllipseItem *m_CurveCrossStartItem;
+    QVector<QGraphicsLineItem *> m_CurveDistanceLineItems;
+    QPoint m_mouseCurveStartPoint;
 
     //TODO: Angle measurement + line displacement
 
