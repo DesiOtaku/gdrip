@@ -149,12 +149,21 @@ void MainWindow::handleSaveImage() {
 void MainWindow::handleFindTeeth() {
     this->statusBar()->showMessage(tr("Finding Teeth"),3000);
     QVector<QVariant> drawMe = ImageProcessor::findTeeth(ui->radioImageWidget->getOriginalImage());
+    int width = ui->radioImageWidget->getOriginalImage().width();
     this->statusBar()->showMessage(tr("Found Teeth"),3000);
+    int counter=0;
     foreach(QVariant var, drawMe) {
         if(var.type() == QVariant::Line) {
             ui->radioImageWidget->addLine(var.toLine(),QColor(255,0,0,100));
         } else if(var.type() == QVariant::Point) {
-            ui->radioImageWidget->addDot(var.toPoint(),QColor(0,255,0,100));
+            if(counter < width) {
+                ui->radioImageWidget->addDot(var.toPoint(),QColor(255,0,0,100));
+            } else if(counter < width *2) {
+                ui->radioImageWidget->addDot(var.toPoint(),QColor(0,255,0,100));
+            }else if(counter < width *3) {
+                ui->radioImageWidget->addDot(var.toPoint(),QColor(0,0,255,100));
+            }
+            counter++;
         }
     }
     this->statusBar()->showMessage(tr("Drawing Teeth"),3000);

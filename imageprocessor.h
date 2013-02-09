@@ -59,6 +59,9 @@ private:
     static QVector<QPoint> findOcculsionFaster(QImage input);
     static float calculateCenterValue(QImage input,int seeX,int seeY);
     static QVector<QLine> findEnamel(QImage input, QVector<QPoint> points, int cutOff);
+    static QVector<QPoint> findOutline(QImage input, int cutoff, QPoint leftOcc, QPoint rightOcc);
+    static qreal findStdevArea(QImage input, QPoint center, int radius);
+    static qreal calcVerticalConstrast(QImage input, QPoint center, int radius);
     static QVector<QLine> findInterProximal(QImage input, QVector<QPoint> points, int cutOff);
     static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
                                 int p1x,int p1y, int stDev, QPainter *input);

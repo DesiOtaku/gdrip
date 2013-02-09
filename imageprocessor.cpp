@@ -71,23 +71,6 @@ QVector<float> ImageProcessor::findOccurrences(QImage input, int offset) {
 
 QImage ImageProcessor::thresholdImage(QImage input, int cutoff) {
 
-//    QVector<int> occLineVals = regValsBezier(p0x,p0y,p2x,p2y,bestBezX,bestBezY,3,img);
-//    int sum=0;
-//    foreach(int val, occLineVals) {
-//        sum+=val;
-//    }
-//    float avgRegVals = ((float)sum) / occLineVals.count();
-//    float devSum =0;
-//    foreach(int val, occLineVals) {
-//        float dev = val-avgRegVals;
-//        devSum += (dev *dev);
-//    }
-//    float stdDev =(float)(sqrt(devSum / (occLineVals.count()-1)));
-
-//    qDebug()<<"Avg: " <<avgRegVals;
-//    qDebug()<<"StDev: " <<stdDev;
-
-//    float thres = avgRegVals + (3 * stdDev);
     //now show that threshold
     QImage returnMe(input);
     for(int x=0;x<input.width();x++) {
@@ -496,23 +479,169 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     QVector<QVariant> returnMe;
 
     int cutoff = average + (5 * standardDev);
-    for(int x=0;x<useMe.width();x++) {
-        for(int y=0;y<useMe.height();y++) {
-            int val = qRed(useMe.pixel(x,y));
-            if(val <= cutoff) {
-                returnMe.append(QPoint(x,y));
-            }
-        }
+    QVector<QPoint> outlines = ImageProcessor::findOutline(input,cutoff,points.first(),points.last());
+
+
+//    for(int x=0;x<useMe.width();x++) {
+//        for(int y=0;y<useMe.height();y++) {
+//            int val = qRed(useMe.pixel(x,y));
+//            if(val <= cutoff) {
+//                returnMe.append(QPoint(x,y));
+//            }
+//        }
+//    }
+
+    foreach(QPoint point, points) {
+        returnMe.append(point);
     }
 
-//    foreach(QPoint point, points) {
-//        returnMe.append(point);
-//    }
+    foreach(QPoint point, outlines) {
+        returnMe.append(point);
+    }
 
 //    foreach(QLine line, lines) {
 //        returnMe.append(line);
 //    }
 
+
+
+    return returnMe;
+}
+
+qreal ImageProcessor::findStdevArea(QImage input, QPoint center, int radius) {
+    QVector<int> localVals;
+    int xStart = qMax(0,center.x()-radius);
+    int xEnd = qMin(input.width()-1,center.x()+radius);
+
+    int yStart = qMax(0,center.y()-radius);
+    int yEnd = qMin(input.height()-1,center.y()+radius);
+
+    for(int scanX=xStart;scanX<=xEnd;scanX++) {
+        for(int scanY=yStart;scanY<=yEnd;scanY++) {
+            localVals.append(qRed(input.pixel(scanX,scanY)));
+        }
+    }
+
+    //Get the average
+    qreal sum=0;
+    foreach(int val, localVals) {
+        sum+=val;
+    }
+    qreal average = sum / localVals.count();
+
+
+    //Now to get the stDEV
+    qreal variance=0;
+    foreach(int val, localVals) {
+        variance += pow(average-val,2);
+    }
+    return sqrt( variance / localVals.count());
+}
+
+qreal ImageProcessor::calcVerticalConstrast(QImage input, QPoint center, int radius) {
+    qreal sum=0;
+//    int xStart = qMax(0,center.x()-radius);
+//    int xEnd = qMin(input.width()-1,center.x()+radius);
+    int xStart = center.x()-1;
+    int xEnd = center.x()+1;
+
+    int yStart = qMax(0,center.y()-radius);
+    int yEnd = qMin(input.height()-1,center.y()+radius);
+
+    int count = (xEnd-xStart) * (yEnd-yStart);
+
+    for(int scanX=xStart;scanX<=xEnd;scanX++) {
+        for(int scanY=yStart;scanY<=yEnd;scanY++) {
+            int value = qRed(input.pixel(scanX,scanY));
+            if(scanY < center.y()) { //white is good
+                if(value > 20) {
+                    sum++;
+                }
+            } else if(scanY > center.y()) { //black is good
+                if(value < 20) {
+                    sum++;
+                }
+            }
+        }
+    }
+    return sum/count;
+}
+
+QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint leftOcc, QPoint rightOcc) {
+    //int radius = (int) (.0001 * input.width()*input.height());
+    int radius = 16;
+    QImage constrastedImg = constrastImage(input,55);
+
+
+    //First, lets get the top left change point
+    qreal highestStDev =0;
+    int bestStartY=0;
+    QVector<QPoint> returnMe;
+    qDebug()<<leftOcc.y();
+
+    for(int currentY=radius;currentY<leftOcc.y();currentY++) {
+        //Scan the area
+        qreal stDev = calcVerticalConstrast(constrastedImg,QPoint(0,currentY),radius);
+
+        if(stDev > highestStDev) {
+            bestStartY = currentY;
+            highestStDev = stDev;
+        }
+    }
+
+    returnMe.append(QPoint(0,bestStartY));
+    int currentY = bestStartY;
+
+    //Now, move right
+    for(int currentX=1;currentX<input.width();currentX++) {
+        int bestOffset =-10;
+        qreal bestOffsetValue=-1;
+        for(int offsetY=-10;offsetY<=10;offsetY++) {
+            qreal value = calcVerticalConstrast(constrastedImg,
+                                                QPoint(currentX,currentY+offsetY),radius);
+            if(value > bestOffsetValue) {
+                bestOffset = offsetY;
+                bestOffsetValue = value;
+            }
+        }
+        returnMe.append(QPoint(currentX,currentY+bestOffset));
+        currentY+=bestOffset;
+    }
+
+
+    //Now, do the same exact thing but for the bottom part
+    //Remember, we want the LOWEST score since we want black on top
+    qreal lowestStDev =INT_MAX;
+    bestStartY=0;
+
+    for(int currentY=leftOcc.y()+1;currentY<input.height();currentY++) {
+        //Scan the area
+        qreal stDev = calcVerticalConstrast(constrastedImg,QPoint(0,currentY),radius);
+
+        if(stDev < lowestStDev) {
+            bestStartY = currentY;
+            lowestStDev = stDev;
+        }
+    }
+
+    returnMe.append(QPoint(0,bestStartY));
+    currentY = bestStartY;
+
+    //Now, move right
+    for(int currentX=1;currentX<input.width();currentX++) {
+        int bestOffset =-10;
+        qreal bestOffsetValue=INT_MAX;
+        for(int offsetY=-10;offsetY<=10;offsetY++) {
+            qreal value = calcVerticalConstrast(constrastedImg,
+                                                QPoint(currentX,currentY+offsetY),radius);
+            if(value < bestOffsetValue) {
+                bestOffset = offsetY;
+                bestOffsetValue = value;
+            }
+        }
+        returnMe.append(QPoint(currentX,currentY+bestOffset));
+        currentY+=bestOffset;
+    }
     return returnMe;
 }
 
@@ -544,41 +673,6 @@ QVector<QLine> ImageProcessor::findEnamel(QImage input, QVector<QPoint> points, 
 
 QVector<QLine> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> points, int cutOff) {
     QVector<QLine> returnMe;
-
-    /*int strikes =(int) ((.01) * input.height());
-    int minWidth = (int) ((.01) * input.width());
-
-    foreach(QPoint point, points) {
-        //first go up
-        int postBlackWhiteCount=0;
-        int postWhiteBlackCount=0;
-        bool moveOn = true;
-        for(int y=point.y();(y<input.height()) && moveOn;y++) {
-            if(qRed(input.pixel(point.x(),y)) > cutOff) { //white
-                if(foundBlack) {
-                    moveOn = false;
-                    returnMe.append(QLine(point,QPoint(point.x(),y)));
-                } else {
-                    foundWhite = true;
-                }
-            } else { //black
-
-            }
-        }
-
-        //now move down
-        moveOn = true;
-        for(int y=point.y();(y>0) && moveOn;y--) {
-            if(qRed(input.pixel(point.x(),y)) > cutOff) {
-                if(foundFirst) {
-                    moveOn = false;
-                    returnMe.append(QLine(point,QPoint(point.x(),y)));
-                } else {
-                    foundFirst = true;
-                }
-            }
-        }
-    }*/
 
     return returnMe;
 }
