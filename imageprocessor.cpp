@@ -69,103 +69,7 @@ QVector<float> ImageProcessor::findOccurrences(QImage input, int offset) {
     return returnMe;
 }
 
-QImage ImageProcessor::thresholdImage(QImage input, int cutoff) {
 
-    //now show that threshold
-    QImage returnMe(input);
-    for(int x=0;x<input.width();x++) {
-        for(int y=0;y<input.height();y++) {
-            int val = qRed(input.pixel(x,y));
-            if(val > cutoff) {
-                //returnMe.setPixel(x,y,255);
-                returnMe.setPixel(x,y,qRgb(255,255,255));
-            } else {
-                returnMe.setPixel(x,y,0);
-            }
-            //returnMe.setPixel(x,y,qRgb(val,val,val));
-        }
-    }
-    return returnMe;
-}
-
-QVector<int> ImageProcessor::findOcculsion(QImage input) {
-    int radius = (int) (.1 * input.height());
-    //qDebug()<<"radius: " <<radius;
-
-    //left side
-    int bestLeftY=0;
-    int bestLeftYval=INT_MAX;
-    for(int currentY=radius;currentY<input.height()-radius;currentY++) {
-        int sum =0;
-        foreach(int x,ImageProcessor::regionVals(0,currentY,radius,input)) {
-            sum+=x;
-        }
-
-        if(sum < bestLeftYval) {
-            bestLeftY = currentY;
-            bestLeftYval = sum;
-        }
-    }
-
-    //QPainter painter(&input);
-    //painter.fillRect(0,bestLeftY,square,square,QColor(255,0,0));
-
-    //right side
-    int bestRightY=0;
-    int bestRightYval=INT_MAX;
-    for(int currentY=radius;currentY<input.height()-radius;currentY++) {
-        int sum =0;
-        foreach(int x,ImageProcessor::regionVals(input.width()-1,currentY,radius,input)) {
-            sum+=x;
-        }
-        //qDebug()<<"Sum was: " <<sum;
-
-        if(sum < bestRightYval) {
-            bestRightY = currentY;
-            bestRightYval = sum;
-        }
-    }
-    //painter.fillRect(input.width()-1-square,bestRightY,square,square,QColor(255,0,0));
-
-    //now for the ugly part: making the (Quadratic) bezier curve
-
-    int p0x = 0;
-    int p0y = bestLeftY;
-
-    int p2x = input.width() -1;
-    int p2y = bestRightY;
-
-    int bestBezX=0;
-    int bestBezY=0;
-    int bestBezVal = INT_MAX;
-    QProgressDialog process(tr("Calculating different bezier curves...."),
-                            QString(),0,input.width()*input.height());
-    process.setWindowTitle(tr("Calculating curves"));
-    process.setWindowModality(Qt::WindowModal);
-    for(int x=0;x<input.width();x++) {
-        for(int y=0;y<input.height();y++) {
-            int val = ImageProcessor::computeBezierSum(
-                        p0x,p0y,p2x,p2y,x,y,bestBezVal,input);
-            if(val < bestBezVal) {
-                bestBezX = x;
-                bestBezY = y;
-                bestBezVal = val;
-            }
-            process.setValue(process.value() +1);
-        }
-    }
-    process.setValue(input.width()*input.height());
-
-    QVector<int> returnMe;
-    returnMe.append(p0x); //0
-    returnMe.append(p0y);//1
-    returnMe.append(bestBezX);//2
-    returnMe.append(bestBezY);//3
-    returnMe.append(p2x);//4
-    returnMe.append(p2y);//5
-
-    return returnMe;
-}
 
 QVector<QPoint> ImageProcessor::findOcculsionFaster(QImage input) {
     int radius = (int) (.1 * input.height());
@@ -241,93 +145,6 @@ float ImageProcessor::calculateCenterValue(QImage input, int seeX, int seeY) {
     return returnMe;
 }
 
-void ImageProcessor::drawBezier(int p0x, int p0y, int p2x,
-                                int p2y, int p1x, int p1y, QPainter *img) {
-    for(float t = 0;t<1;t+= 0.0001) {
-        float onemt = 1-t;
-
-        float x = (onemt*onemt*p0x) +
-                (2 * onemt * t *p1x) +
-                (t * t *p2x);
-
-        float y = (onemt*onemt*p0y) +
-                (2 * onemt * t *p1y) +
-                (t * t *p2y);
-
-        img->fillRect((int)x,(int)y,1,1,QColor(0,255,0));
-        //img.setPixel((int)x,(int)y,qRgb(0,255,0));
-    }
-
-//    qDebug()<<"p0x: " << p0x;
-//    qDebug()<<"p0y: " << p0y;
-//    qDebug()<<"p2x: " << p2x;
-//    qDebug()<<"p2y: " << p2y;
-
-}
-
-QImage ImageProcessor::drawOcculsion(QImage input) {
-    QVector<int> occ = ImageProcessor::findOcculsion(input);
-    QImage returnMe(input);
-    returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
-    QPainter p(&returnMe);
-    ImageProcessor::drawBezier(
-                occ.at(0),
-                occ.at(1),
-                occ.at(4),
-                occ.at(5),
-                occ.at(2),
-                occ.at(3),
-                &p
-                );
-    return returnMe;
-}
-
-int ImageProcessor::computeBezierSum(int p0x, int p0y, int p2x,
-                                  int p2y, int p1x, int p1y, int best, QImage img) {
-    int returnMe=0;
-    float div = 1.0/ img.width() * 2;
-    for(float t = 0;t<1;t+= div) {
-        float onemt = 1-t;
-
-        float x = (onemt * onemt*p0x) +
-                (2 * onemt * t *p1x) +
-                (t * t *p2x);
-
-        float y = (onemt * onemt*p0y) +
-                (2 * onemt * t *p1y) +
-                (t * t *p2y);
-
-        int val = qRed(img.pixel((int)x,(int)y));
-        //returnMe += (val*val) ;
-        returnMe += (val) ;
-
-        if(returnMe > best) {
-            return returnMe;
-        }
-    }
-
-    return returnMe;
-}
-
-QVector<int> ImageProcessor::regValsBezier(int p0x, int p0y, int p2x,
-                                           int p2y, int p1x, int p1y, int r, QImage img) {
-    QVector<int> returnMe;
-    float div = 1.0/ img.width() * 2;
-    for(float t = 0;t<1;t+= div) {
-        float onemt = 1-t;
-
-        float x = (onemt * onemt*p0x) +
-                (2 * onemt * t *p1x) +
-                (t * t *p2x);
-
-        float y = (onemt * onemt*p0y) +
-                (2 * onemt * t *p1y) +
-                (t * t *p2y);
-
-        returnMe << regionVals((int)x,(int)y,r,img);
-    }
-    return returnMe;
-}
 
 QVector<int> ImageProcessor::regionVals(int startX, int startY, int r, QImage img) {
     QVector<int> vals;
@@ -344,40 +161,6 @@ QVector<int> ImageProcessor::regionVals(int startX, int startY, int r, QImage im
     return vals;
 }
 
-QImage ImageProcessor::findBackground(QImage input) {
-    QImage returnMe = equalizeHistogram(input);
-    QVector<int> occ = ImageProcessor::findOcculsion(returnMe);
-
-    //returnMe = returnMe.convertToFormat(QImage::Format_RGB32);
-    //QPainter p(&returnMe);
-
-    QVector<int> regVals = ImageProcessor::regValsBezier(
-                occ.at(0),
-                occ.at(1),
-                occ.at(4),
-                occ.at(5),
-                occ.at(2),
-                occ.at(3),
-                3,
-                returnMe
-                );
-
-    int sum=0;
-    foreach(int i ,regVals) {
-        sum+=i;
-    }
-    double average = ((double)sum) /  regVals.count();
-    double variance=0;
-    foreach(int i ,regVals) {
-        int val = i-average;
-        variance+= (val *val);
-    }
-    double standardDev =sqrt(variance / regVals.count());
-    returnMe = ImageProcessor::thresholdImage(returnMe,average + (standardDev*3));
-    returnMe = ImageProcessor::drawOcculsion(returnMe);
-
-    return returnMe;
-}
 
 void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
                                      int p2y, int p1x, int p1y,
@@ -450,7 +233,6 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
 }
 
 QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
-    //QImage useMe = equalizeHistogram(input);
     QImage useMe = constrastImage(input,65);
     QVector<QPoint> points = ImageProcessor::findOcculsionFaster(useMe);
 
@@ -471,26 +253,16 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     qDebug()<<"Average: "<< average;
     qDebug()<<"StDev: "<< standardDev;
 
-
     QVector<QLine> lines = ImageProcessor::findEnamel(useMe,points, average + (5 * standardDev));
-
-
 
     QVector<QVariant> returnMe;
 
     int cutoff = average + (5 * standardDev);
     QVector<QPoint> outlines = ImageProcessor::findOutline(input,cutoff,points.first(),points.last());
-    QMultiMap<bool,QPoint> inter = ImageProcessor::findInterProximal(input,points,outlines,cutoff);
+    QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,outlines,cutoff);
+    QVector<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
 
 
-//    for(int x=0;x<useMe.width();x++) {
-//        for(int y=0;y<useMe.height();y++) {
-//            int val = qRed(useMe.pixel(x,y));
-//            if(val <= cutoff) {
-//                returnMe.append(QPoint(x,y));
-//            }
-//        }
-//    }
 
     foreach(QPoint point, points) {
         returnMe.append(point);
@@ -503,12 +275,6 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     foreach(QPoint point, inter) {
         returnMe.append(point);
     }
-
-//    foreach(QLine line, lines) {
-//        returnMe.append(line);
-//    }
-
-
 
     return returnMe;
 }
@@ -547,13 +313,13 @@ qreal ImageProcessor::calcVerticalConstrast(QImage input, QPoint center, int rad
     qreal sum=0;
 //    int xStart = qMax(0,center.x()-radius);
 //    int xEnd = qMin(input.width()-1,center.x()+radius);
-    int xStart = center.x()-1;
-    int xEnd = center.x()+1;
+    int xStart = qMax( center.x()-1,0);
+    int xEnd = qMin( center.x()+1,input.width()-1);
 
     int yStart = qMax(0,center.y()-radius);
     int yEnd = qMin(input.height()-1,center.y()+radius);
 
-    int count = (xEnd-xStart) * (yEnd-yStart);
+    int count = yEnd-yStart;
 
     for(int scanX=xStart;scanX<=xEnd;scanX++) {
         for(int scanY=yStart;scanY<=yEnd;scanY++) {
@@ -572,6 +338,12 @@ qreal ImageProcessor::calcVerticalConstrast(QImage input, QPoint center, int rad
     return sum/count;
 }
 
+QImage ImageProcessor::invertImage(QImage input) {
+    QImage returnMe(input);
+    returnMe.invertPixels();
+    return returnMe;
+}
+
 QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint leftOcc, QPoint rightOcc) {
     //int radius = (int) (.0001 * input.width()*input.height());
     int radius = 16;
@@ -582,7 +354,6 @@ QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint lef
     qreal highestStDev =0;
     int bestStartY=0;
     QVector<QPoint> returnMe;
-    qDebug()<<leftOcc.y();
 
     for(int currentY=radius;currentY<leftOcc.y();currentY++) {
         //Scan the area
@@ -686,8 +457,8 @@ QVector<QPoint> ImageProcessor::findSameX(QPoint needle, QVector<QPoint> haystac
     return returnMe;
 }
 
-QMultiMap<bool,QPoint> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> occPoints, QVector<QPoint> outlinePoints, int cutOff){
-    QMultiMap<bool,QPoint> returnMe;
+QVector<QPoint> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> occPoints, QVector<QPoint> outlinePoints, int cutOff){
+    QVector<QPoint> returnMe;
     QImage constrastedImg = constrastImage(input,70);
     for(int lookAtX=0;lookAtX<input.width();lookAtX++) {
         for(int lookAtY=0;lookAtY<input.height();lookAtY++) {
@@ -698,9 +469,9 @@ QMultiMap<bool,QPoint> ImageProcessor::findInterProximal(QImage input, QVector<Q
                     qreal highLookAt = lookAtY - (.05 * input.height());
                     qreal lowLookAt = lookAtY + (.05 * input.height());
                     if( (lowLookAt < occSame.first().y()) && (lowLookAt < occSame.last().y()) ) { //maxillary interproximal
-                        returnMe.insert(true,QPoint(lookAtX,lookAtY));
+                        returnMe.append(QPoint(lookAtX,lookAtY));
                     } else if( (highLookAt > occSame.first().y()) && (highLookAt > occSame.last().y()) ) { //mandibular interproximal
-                        returnMe.insert(false,QPoint(lookAtX,lookAtY));
+                        returnMe.append(QPoint(lookAtX,lookAtY));
                     }
                 }
             }
@@ -709,29 +480,92 @@ QMultiMap<bool,QPoint> ImageProcessor::findInterProximal(QImage input, QVector<Q
     return returnMe;
 }
 
-QImage ImageProcessor::brightenImage(QImage original, int amount) {
-    QImage returnMe(original.width(),original.height(),QImage::Format_ARGB32);
-    QPainter painter(&returnMe);
+void ImageProcessor::resetMatrix(int** map, int previousValue, int newValue, int width, int height) {
+    for(int x=0;x<width;x++) {
+        for(int y=0;y<height;y++) {
+            if(map[x][y] == previousValue) {
+                map[x][y] = newValue;
+            }
+        }
+    }
+}
 
-    QImage addMe(original.width(),original.height(),QImage::Format_ARGB32);
+void ImageProcessor::mergeNeighbors(int** map, int x, int y,int width, int height) {
+    int xStart = qMax(0,x-1);
+    int xEnd = qMin(width-1,x+1);
 
-    if(amount > 50) { //brighten for rizzle
-        painter.setCompositionMode(QPainter::CompositionMode_Plus);
-        int alpha = (int) (( (amount-50) / 50.0) * 255.0);
-        addMe.fill(QColor(255,255,255,alpha));
-    } else if(amount < 50) {
-        painter.setCompositionMode(QPainter::CompositionMode_Multiply);
-        int alpha = (int) (( (50-amount) / 50.0) * 255.0);
-        addMe.fill(QColor(0,0,0,alpha));
-    } else { //no point in wasting my time
-        return original;
+    int yStart = qMax(0,y-1);
+    int yEnd = qMin(height-1,y+1);
+
+    int originalVal = map[x][y];
+    for(int currentX=xStart;currentX<=xEnd;currentX++) {
+        for(int currentY=yStart;currentY<=yEnd;currentY++) {
+            int currentVal = map[currentX][currentY];
+            if((currentVal >= 0) && (currentVal != originalVal) ) {
+                int newVal = qMin(currentVal,originalVal);
+                int badVal = qMax(currentVal,originalVal);
+                map[x][y] = newVal;
+                map[currentX][currentY] = newVal;
+                resetMatrix(map,badVal,newVal,width,height);
+            }
+        }
+    }
+}
+
+QVector<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int width, int height) {
+    QVector<QVector<QPoint> > returnMe;
+
+    int** map = new int*[width];
+    for(int i=0;i<width;i++) {
+        map[i] = new int[height];
+        for(int b=0;b<height;b++) {
+            map[i][b] = -1;
+        }
     }
 
-    painter.drawImage(0,0,original);
-    painter.drawImage(0,0,addMe);
+    int counter=0;
+    foreach(QPoint point, points) {
+        map[point.x()][point.y()] = counter;
+        counter++;
+    }
+
+    QProgressDialog dia("Merging neighbors",QString(),0,width*height);
+    dia.setWindowModality(Qt::WindowModal);
+
+    for(int x=0;x<width;x++) {
+        for(int y=0;y<height;y++) {
+            if(map[x][y] >=0) {
+                mergeNeighbors(map,x,y,width,height);
+            }
+            dia.setValue(dia.value() +1);
+        }
+    }
+    dia.setValue(width*height);
+
+    //Now to store the storted points
+    QProgressDialog dia2("Saving neighbors",QString(),0,counter);
+    QHash<int,int> valueIndexTable;
+    foreach(QPoint point, points) {
+        int groupID = map[point.x()][point.y()];
+        if(valueIndexTable.contains(groupID)) {
+            QVector<QPoint> appendToMe = returnMe.at(valueIndexTable.value(groupID));
+            appendToMe.append(point);
+        } else {
+            QVector<QPoint> appendToMe;
+            appendToMe.append(point);
+            returnMe.append(appendToMe);
+            valueIndexTable.insert(groupID,returnMe.count()-1);
+        }
+        dia2.setValue(dia2.value() +1);
+    }
+    dia2.setValue(counter);
+
+    qDebug()<<"Groups: " << returnMe.count();
 
     return returnMe;
 }
+
+
 
 QImage ImageProcessor::constrastImage(QImage original, int amount) {
     QImage returnMe(original.width(),original.height(),QImage::Format_ARGB32);
@@ -755,12 +589,6 @@ QImage ImageProcessor::constrastImage(QImage original, int amount) {
     return returnMe;
 }
 
-QImage ImageProcessor::invertImage(QImage input) {
-    QImage returnMe(input);
-    returnMe.invertPixels();
-    return returnMe;
-
-}
 
 QImage ImageProcessor::spreadHistogram(QImage input) {
     //Really, this is normalization, http://en.wikipedia.org/wiki/Normalization_(image_processing)
@@ -797,37 +625,6 @@ QImage ImageProcessor::spreadHistogram(QImage input) {
             int newValue =(int) ((value - lowest) * (255.0 / diff));
             painter.fillRect(x,y,1,1,QColor(newValue,newValue,newValue));
         }
-    }
-
-    return returnMe;
-}
-
-QImage ImageProcessor::mirrorVertically(QImage input) {
-    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
-    QPainter painter(&returnMe);
-    QPixmap newInput;
-    newInput.convertFromImage(input);
-
-
-    //TODO: Use drawPixmapFragments
-    for(int y=0;y<input.height();y++) {
-        painter.drawPixmap(0,input.height()-y-1, newInput,
-                           0,y, input.width(),1);
-    }
-
-    return returnMe;
-}
-
-QImage ImageProcessor::mirrorHorizontally(QImage input) {
-    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
-    QPainter painter(&returnMe);
-    QPixmap newInput;
-    newInput.convertFromImage(input);
-
-    //TODO: Use drawPixmapFragments
-    for(int x=0;x<input.width();x++) {
-        painter.drawPixmap(input.width()-x-1,0, newInput,
-                           x,0, 1,input.height() );
     }
 
     return returnMe;
