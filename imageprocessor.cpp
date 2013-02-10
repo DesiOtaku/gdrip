@@ -473,13 +473,14 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
 
 
     QVector<QLine> lines = ImageProcessor::findEnamel(useMe,points, average + (5 * standardDev));
-    QVector<QLine> inter = ImageProcessor::findInterProximal(useMe,points, average + (5 * standardDev));
+
 
 
     QVector<QVariant> returnMe;
 
     int cutoff = average + (5 * standardDev);
     QVector<QPoint> outlines = ImageProcessor::findOutline(input,cutoff,points.first(),points.last());
+    QMultiMap<bool,QPoint> inter = ImageProcessor::findInterProximal(input,points,outlines,cutoff);
 
 
 //    for(int x=0;x<useMe.width();x++) {
@@ -496,6 +497,10 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     }
 
     foreach(QPoint point, outlines) {
+        returnMe.append(point);
+    }
+
+    foreach(QPoint point, inter) {
         returnMe.append(point);
     }
 
@@ -671,9 +676,36 @@ QVector<QLine> ImageProcessor::findEnamel(QImage input, QVector<QPoint> points, 
     return returnMe;
 }
 
-QVector<QLine> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> points, int cutOff) {
-    QVector<QLine> returnMe;
+QVector<QPoint> ImageProcessor::findSameX(QPoint needle, QVector<QPoint> haystack) {
+    QVector<QPoint> returnMe;
+    foreach(QPoint hay, haystack) {
+        if(needle.x() == hay.x()) {
+            returnMe.append(hay);
+        }
+    }
+    return returnMe;
+}
 
+QMultiMap<bool,QPoint> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> occPoints, QVector<QPoint> outlinePoints, int cutOff){
+    QMultiMap<bool,QPoint> returnMe;
+    QImage constrastedImg = constrastImage(input,70);
+    for(int lookAtX=0;lookAtX<input.width();lookAtX++) {
+        for(int lookAtY=0;lookAtY<input.height();lookAtY++) {
+            int value = qRed(constrastedImg.pixel(lookAtX,lookAtY));
+            if(value <= cutOff) {
+                QVector<QPoint> occSame = findSameX(QPoint(lookAtX,lookAtY),outlinePoints);
+                if(occSame.count()==2) {
+                    qreal highLookAt = lookAtY - (.05 * input.height());
+                    qreal lowLookAt = lookAtY + (.05 * input.height());
+                    if( (lowLookAt < occSame.first().y()) && (lowLookAt < occSame.last().y()) ) { //maxillary interproximal
+                        returnMe.insert(true,QPoint(lookAtX,lookAtY));
+                    } else if( (highLookAt > occSame.first().y()) && (highLookAt > occSame.last().y()) ) { //mandibular interproximal
+                        returnMe.insert(false,QPoint(lookAtX,lookAtY));
+                    }
+                }
+            }
+        }
+    }
     return returnMe;
 }
 

@@ -162,6 +162,8 @@ void MainWindow::handleFindTeeth() {
                 ui->radioImageWidget->addDot(var.toPoint(),QColor(0,255,0,100));
             }else if(counter < width *3) {
                 ui->radioImageWidget->addDot(var.toPoint(),QColor(0,0,255,100));
+            } else {
+                ui->radioImageWidget->addDot(var.toPoint(),QColor(255,0,255,100));
             }
             counter++;
         }

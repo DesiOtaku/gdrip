@@ -61,8 +61,9 @@ private:
     static QVector<QLine> findEnamel(QImage input, QVector<QPoint> points, int cutOff);
     static QVector<QPoint> findOutline(QImage input, int cutoff, QPoint leftOcc, QPoint rightOcc);
     static qreal findStdevArea(QImage input, QPoint center, int radius);
+    static QVector<QPoint> findSameX(QPoint needle, QVector<QPoint> haystack);
     static qreal calcVerticalConstrast(QImage input, QPoint center, int radius);
-    static QVector<QLine> findInterProximal(QImage input, QVector<QPoint> points, int cutOff);
+    static QMultiMap<bool,QPoint> findInterProximal(QImage input, QVector<QPoint> occPoints,QVector<QPoint> outlinePoints, int cutOff);
     static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
                                 int p1x,int p1y, int stDev, QPainter *input);
     static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,
