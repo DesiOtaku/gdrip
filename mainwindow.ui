@@ -68,6 +68,7 @@
     <addaction name="actionDraw_Occulsion"/>
     <addaction name="actionFind_Background"/>
     <addaction name="actionFind_Teeth"/>
+    <addaction name="actionFind_Pulp"/>
     <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuWindows">
@@ -100,6 +101,7 @@
    <addaction name="actionInvert_Image"/>
    <addaction name="actionEqualize_Histogram"/>
    <addaction name="actionStrech_Histogram"/>
+   <addaction name="actionFind_Pulp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="histoDock">
@@ -662,6 +664,14 @@
    </property>
    <property name="toolTip">
     <string>Use the mouse to measure</string>
+   </property>
+  </action>
+  <action name="actionFind_Pulp">
+   <property name="text">
+    <string>Find Pulp</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
  </widget>

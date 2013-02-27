@@ -31,9 +31,11 @@
 #include <QTransform>
 #include <QBitmap>
 #include <QPropertyAnimation>
+#include <QUrl>
 
 #include "math.h"
 #include "imageprocessor.h"
+#include "mainwindow.h"
 
 RadiographWidget::RadiographWidget(QWidget *parent) :
     QGraphicsView(parent),
@@ -42,6 +44,7 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     setMouseTracking(true);
     m_BrightnessSet = 50;
     m_ContrastSet = 50;
+    m_IsSelectingPoint = false;
 
     QGraphicsScene *scene = new QGraphicsScene(this);
     m_PixItem= new QGraphicsPixmapItem(0,scene);
@@ -72,6 +75,7 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_DistanceLineItem = new QGraphicsLineItem(0,scene);
     m_DistanceLineItem->setVisible(false);
     m_DistanceLineItem->setPen(QPen(QBrush(QColor(0,0,255,100)),5,Qt::DotLine,Qt::RoundCap));
+
 }
 
 RadiographWidget::~RadiographWidget() {
@@ -251,6 +255,11 @@ void RadiographWidget::mousePressEvent(QMouseEvent *event) {
         QLineF line(m_CrossStartItem->pos(),m_CrossStartItem->pos());
         m_DistanceLineItem->setLine(line);
         m_DistanceLineItem->setVisible(true);
+    } else if(m_IsSelectingPoint) {
+        QPointF scenepos = this->mapToScene(event->pos());
+        QPointF po = m_PixItem->mapFromScene(scenepos);
+        emit pointSelected(po.toPoint());
+        m_IsSelectingPoint = false;
     } else {
         QGraphicsView::mousePressEvent(event);
     }
@@ -346,4 +355,9 @@ QImage RadiographWidget::getMarkedImage() {
     }
 
     return returnMe;
+}
+
+void RadiographWidget::selectPoint() {
+    m_IsSelectingPoint = true;
+    this->viewport()->setCursor(QCursor(Qt::CrossCursor));
 }

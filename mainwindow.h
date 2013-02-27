@@ -51,6 +51,8 @@ public slots:
     void handleStartOver();
     void handleSaveImage();
     void handleFindTeeth();
+    void handleFindPulp();
+    void handlePulpPointSelected(QPoint selectedPoint);
     
 private:
     Ui::MainWindow *ui;

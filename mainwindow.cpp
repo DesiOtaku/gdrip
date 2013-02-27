@@ -45,10 +45,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->contrastSlider,SIGNAL(valueChanged(int)),ui->radioImageWidget,SLOT(setContrast(int)));
     connect(ui->actionEqualize_Histogram,SIGNAL(triggered()),ui->radioImageWidget,SLOT(equalizeImg()));
     connect(ui->actionStart_Over,SIGNAL(triggered()),this,SLOT(handleStartOver()));
-//    connect(ui->actionDraw_Occulsion,SIGNAL(triggered()),
-//            this,SLOT(handleDrawOcc()));
-//    connect(ui->actionFind_Background,SIGNAL(triggered()),
-//            this,SLOT(handleFindBack()));
     connect(ui->actionSave_Image,SIGNAL(triggered()),this,SLOT(handleSaveImage()));
     connect(ui->actionFind_Teeth,SIGNAL(triggered()),this,SLOT(handleFindTeeth()));
     connect(ui->actionMirrorVer,SIGNAL(triggered()),ui->radioImageWidget,SLOT(mirrorV()));
@@ -56,13 +52,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionInvert_Image,SIGNAL(triggered()), ui->radioImageWidget,SLOT(invertImg()));
     connect(ui->actionStrech_Histogram,SIGNAL(triggered()),ui->radioImageWidget,SLOT(strechHisto()));
     connect(ui->radioImageWidget,SIGNAL(messageUpdate(QString,int)),this->statusBar(),SLOT(showMessage(QString,int)));
+    connect(ui->actionFind_Pulp,SIGNAL(triggered()),this,SLOT(handleFindPulp()));
+    connect(ui->radioImageWidget,SIGNAL(pointSelected(QPoint)),this,SLOT(handlePulpPointSelected(QPoint)));
 
     connect(ui->radioImageWidget,SIGNAL(newHistogram(QVector<float>)),
             ui->histoWidget, SLOT(setHistogram(QVector<float>)));
     connect(ui->radioImageWidget,SIGNAL(pixelValueHighlighted(int)),
             ui->histoWidget, SLOT(highlightValue(int)));
 
-    QSettings settings("Tej A. Shah", "gdrip");
+    QSettings settings("tshah", "gdrip");
     restoreState(settings.value("windowState").toByteArray());
 
     this->statusBar()->showMessage(tr("Ready"),3000);
@@ -75,7 +73,7 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
-    if (event->mimeData()->hasUrls()) {
+    if (event->mimeData()->hasUrls()) { //TODO: make a const or something to keep the list of formats
         foreach (QUrl url, event->mimeData()->urls()) {
             if(url.path().endsWith(".png",Qt::CaseInsensitive) ||
                     url.path().endsWith(".jpg",Qt::CaseInsensitive) ||
@@ -169,4 +167,24 @@ void MainWindow::handleFindTeeth() {
         }
     }
     this->statusBar()->showMessage(tr("Drawing Teeth"),3000);
+}
+
+void MainWindow::handleFindPulp() {
+    this->statusBar()->showMessage(tr("Please select a point"),3000);
+    ui->radioImageWidget->selectPoint();
+    //At some point, radiographwidget is going to call handlePulpPointSelected()
+}
+
+void MainWindow::handlePulpPointSelected(QPoint selectedPoint) {
+    this->statusBar()->showMessage(tr("Finding pulp"),3000);
+    QVector<QVariant> drawMe = ImageProcessor::findPulp(ui->radioImageWidget->getOriginalImage(),selectedPoint);
+    this->statusBar()->showMessage(tr("Found pulp"),3000);
+    foreach(QVariant var, drawMe) {
+        if(var.type() == QVariant::Line) {
+            ui->radioImageWidget->addLine(var.toLine(),QColor(255,0,0,100));
+        } else if(var.type() == QVariant::Point) {
+            ui->radioImageWidget->addDot(var.toPoint(),QColor(255,0,0,100));
+        }
+    }
+    this->statusBar()->showMessage(tr("Drawing the pulp"),3000);
 }

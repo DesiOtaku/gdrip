@@ -74,12 +74,15 @@ public slots:
     void strechHisto();
     void mirrorV();
     void mirrorH();
+    void selectPoint();
     void reset();
+
 
 signals:
     void messageUpdate(QString message,int timeout);
     void newHistogram(QVector<float> values);
     void pixelValueHighlighted(int value);
+    void pointSelected(QPoint selectedPoint);
 
 
 private:
@@ -116,8 +119,13 @@ private:
     QVector<QGraphicsEllipseItem *> m_Markcircles;
     QVector<QGraphicsRectItem *> m_Markdots;
 
+    //Extra actions
+    bool m_IsSelectingPoint;
+
     //Private functions
     void updateHistogram();
+
+
 };
 
 #endif // RADIOGRAPHWIDGET_H

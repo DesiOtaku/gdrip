@@ -50,6 +50,7 @@ public:
     static QImage drawOcculsion(QImage input);
     static QImage findBackground(QImage input);
     static QVector<QVariant> findTeeth(QImage input);
+    static QVector<QVariant> findPulp(QImage input, QPoint startingPoint);
 
     
 private:
@@ -74,6 +75,8 @@ private:
     static QVector<int> regValsBezier(int p0x,int p0y,int p2x,int p2y,
                                       int p1x,int p1y,int r, QImage img);
     static QVector<int> regionVals(int startX, int startY, int r, QImage img);
+
+    static bool goodVal(int candidate, QVector<int> committee);
 
 };
 

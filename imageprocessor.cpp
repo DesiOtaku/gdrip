@@ -260,7 +260,7 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     int cutoff = average + (5 * standardDev);
     QVector<QPoint> outlines = ImageProcessor::findOutline(input,cutoff,points.first(),points.last());
     QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,outlines,cutoff);
-    QVector<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
+    //QVector<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
 
 
 
@@ -623,9 +623,62 @@ QImage ImageProcessor::spreadHistogram(QImage input) {
         for(int y=0;y<input.height();y++) {
             int value = qRed(input.pixel(x,y));
             int newValue =(int) ((value - lowest) * (255.0 / diff));
+            //TODO: faster way to fill those pixels
             painter.fillRect(x,y,1,1,QColor(newValue,newValue,newValue));
         }
     }
 
     return returnMe;
+}
+
+
+bool ImageProcessor::goodVal(int candidate, QVector<int> committee) {
+    bool returnMe =false;
+    foreach(int val, committee) {
+        returnMe = returnMe || (qAbs(val-candidate)<=1);
+    }
+    return returnMe;
+}
+
+QVector<QVariant> ImageProcessor::findPulp(QImage input, QPoint startingPoint) {
+    QVector<QVariant> returnMe;
+
+    //Yes, I am making the crazy assumption we are nowhere near a corner
+    //Edge checking will come in if this actually comes in anywhere.. like... ever..
+    int sum =0;
+    QVector<int> goodVals;
+    //Anything within chess distance of 10 automatically gets into the awesome pixel club
+    for(int sumX = startingPoint.x()-5; sumX <=  startingPoint.x()+5; sumX++) {
+        for(int sumY = startingPoint.y()-5;sumY <= startingPoint.y()+5;sumY++) {
+            int val = qRed(input.pixel(sumX,sumY));
+            sum += val;
+            goodVals.append(val);
+            returnMe.append(QPoint(sumX,sumY));
+        }
+    }
+
+    //Now we will use spiral power (clockwise) to get more values
+    for(int rad=5;rad < 200;rad++) {
+        //top edge
+        for(int eyeX = startingPoint.x() - rad; eyeX <= startingPoint.x() + rad;eyeX++) {
+            if(input.valid(eyeX,startingPoint.y() + rad)) {
+                int val = qRed(input.pixel(eyeX,startingPoint.y() + rad));
+                //qDebug()<<val;
+                if(goodVal(val,goodVals)) {
+                    goodVals.append(val);
+                    returnMe.append(QPoint(eyeX,startingPoint.y() + rad));
+                }
+            }
+        }
+
+        //right edge
+        //bottom edge
+        //left edge
+    }
+
+
+
+
+    return returnMe;
+
 }
