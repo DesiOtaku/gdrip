@@ -632,50 +632,33 @@ QImage ImageProcessor::spreadHistogram(QImage input) {
 }
 
 
-bool ImageProcessor::goodVal(int candidate, QVector<int> committee) {
-    bool returnMe =false;
-    foreach(int val, committee) {
-        returnMe = returnMe || (qAbs(val-candidate)<=1);
-    }
-    return returnMe;
-}
+
 
 QVector<QVariant> ImageProcessor::findPulp(QImage input, QPoint startingPoint) {
     QVector<QVariant> returnMe;
+    int endRad = 100;
+    int segmentSize =5;
 
-    //Yes, I am making the crazy assumption we are nowhere near a corner
-    //Edge checking will come in if this actually comes in anywhere.. like... ever..
-    int sum =0;
-    QVector<int> goodVals;
-    //Anything within chess distance of 10 automatically gets into the awesome pixel club
-    for(int sumX = startingPoint.x()-5; sumX <=  startingPoint.x()+5; sumX++) {
-        for(int sumY = startingPoint.y()-5;sumY <= startingPoint.y()+5;sumY++) {
-            int val = qRed(input.pixel(sumX,sumY));
-            sum += val;
-            goodVals.append(val);
-            returnMe.append(QPoint(sumX,sumY));
-        }
-    }
+    for(int deg=0;deg<360;deg++) {
+        int stageStatus =0; //each stage is changed in each major pixel value change
+        qreal radians = (deg* 3.14159265)/180;
+        QVector<qreal> segmentAverages;
+        for(int r=1;r<endRad;r++) {
+            //qreal xPoint = startingPoint.x() + (r * cos(radians));
+            //qreal yPoint = startingPoint.y() + (r * sin(radians));
+            //QPoint currentPoint((int)xPoint,(int)yPoint); //TODO: bilinear interpolation
+            //now figure out the segment variance value
+            for(int m=r;r<=r+segmentSize;m++) {
+                qreal xCheck = startingPoint.x() + (m * cos(radians));
+                qreal yCheck = startingPoint.y() + (m * sin(radians));
 
-    //Now we will use spiral power (clockwise) to get more values
-    for(int rad=5;rad < 200;rad++) {
-        //top edge
-        for(int eyeX = startingPoint.x() - rad; eyeX <= startingPoint.x() + rad;eyeX++) {
-            if(input.valid(eyeX,startingPoint.y() + rad)) {
-                int val = qRed(input.pixel(eyeX,startingPoint.y() + rad));
-                //qDebug()<<val;
-                if(goodVal(val,goodVals)) {
-                    goodVals.append(val);
-                    returnMe.append(QPoint(eyeX,startingPoint.y() + rad));
-                }
             }
+
+
+
+
         }
-
-        //right edge
-        //bottom edge
-        //left edge
     }
-
 
 
 

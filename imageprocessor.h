@@ -76,8 +76,6 @@ private:
                                       int p1x,int p1y,int r, QImage img);
     static QVector<int> regionVals(int startX, int startY, int r, QImage img);
 
-    static bool goodVal(int candidate, QVector<int> committee);
-
 };
 
 #endif // IMAGEPROCESSOR_H
