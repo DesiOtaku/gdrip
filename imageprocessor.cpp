@@ -260,7 +260,7 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     int cutoff = average + (5 * standardDev);
     QVector<QPoint> outlines = ImageProcessor::findOutline(input,cutoff,points.first(),points.last());
     QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,outlines,cutoff);
-    //QVector<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
+    QVector<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
 
 
 
@@ -272,8 +272,16 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
         returnMe.append(point);
     }
 
-    foreach(QPoint point, inter) {
-        returnMe.append(point);
+//    foreach(QPoint point, inter) {
+//        returnMe.append(point);
+//    }
+
+    foreach(QVector<QPoint> group, interProxGroups) {
+        if(group.count() > 0) {
+            foreach(QPoint point, group) {
+                returnMe.append(point);
+            }
+        }
     }
 
     return returnMe;
@@ -480,87 +488,98 @@ QVector<QPoint> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> 
     return returnMe;
 }
 
-void ImageProcessor::resetMatrix(int** map, int previousValue, int newValue, int width, int height) {
-    for(int x=0;x<width;x++) {
-        for(int y=0;y<height;y++) {
-            if(map[x][y] == previousValue) {
-                map[x][y] = newValue;
-            }
-        }
-    }
-}
+QVector<QPoint> ImageProcessor::findValidNeighbors(QPoint point, int **quickMap, int width, int height) {
+    QVector<QPoint> returnMe;
+    int xStart = qMax(0,point.x()-1);
+    int xEnd = qMin(width-1,point.x()+1);
 
-void ImageProcessor::mergeNeighbors(int** map, int x, int y,int width, int height) {
-    int xStart = qMax(0,x-1);
-    int xEnd = qMin(width-1,x+1);
+    int yStart = qMax(0,point.y()-1);
+    int yEnd = qMin(height-1,point.y()+1);
 
-    int yStart = qMax(0,y-1);
-    int yEnd = qMin(height-1,y+1);
-
-    int originalVal = map[x][y];
     for(int currentX=xStart;currentX<=xEnd;currentX++) {
         for(int currentY=yStart;currentY<=yEnd;currentY++) {
-            int currentVal = map[currentX][currentY];
-            if((currentVal >= 0) && (currentVal != originalVal) ) {
-                int newVal = qMin(currentVal,originalVal);
-                int badVal = qMax(currentVal,originalVal);
-                map[x][y] = newVal;
-                map[currentX][currentY] = newVal;
-                resetMatrix(map,badVal,newVal,width,height);
+            if(quickMap[currentX][currentY] != -1) {
+                returnMe.append(QPoint(currentX,currentY));
             }
         }
     }
+    return returnMe;
 }
 
 QVector<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int width, int height) {
-    QVector<QVector<QPoint> > returnMe;
+    //http://en.wikipedia.org/wiki/Connected-component_labeling
+    QVector<QVector<QPoint> > returnMe(points.count()); //same as "linked"
 
-    int** map = new int*[width];
+    int** map = new int*[width]; //same as "labels"
+    int** quickMap = new int*[width]; //just to make a fast lookup for points
     for(int i=0;i<width;i++) {
         map[i] = new int[height];
+        quickMap[i] = new int[height];
         for(int b=0;b<height;b++) {
-            map[i][b] = -1;
+            map[i][b] = -1; //"empty"
+            quickMap[i][b] = -1;
         }
     }
-
-    int counter=0;
-    foreach(QPoint point, points) {
-        map[point.x()][point.y()] = counter;
-        counter++;
+    foreach(QPoint point,points) {
+        quickMap[point.x()][point.y()] = 1;
     }
 
-    QProgressDialog dia("Merging neighbors",QString(),0,width*height);
-    dia.setWindowModality(Qt::WindowModal);
+    int counter=0;//same as "NextLabel"
 
-    for(int x=0;x<width;x++) {
+    //First pass
+    QProgressDialog dia(tr("Doing Connectivity checks"),QString(),0,width*height);
+    dia.setWindowModality(Qt::WindowModal);
+    for(int x=0;x<width;x++) { //yeah, its column then row, but it shouldn't matter
         for(int y=0;y<height;y++) {
-            if(map[x][y] >=0) {
-                mergeNeighbors(map,x,y,width,height);
+            if(quickMap[x][y] != -1) { //if it is not background
+                QPoint currentPoint(x,y);
+                QVector<QPoint> neighbors = findValidNeighbors(currentPoint,map,width,height);
+                if(neighbors.count() == 0) {
+                    QVector<QPoint> newVal;
+                    newVal.append(currentPoint);
+                    returnMe.replace(counter ,newVal);
+                    map[x][y] = counter;
+                    counter++;
+                } else {
+                    int lowest= INT_MAX;
+                    foreach(QPoint point, neighbors) {
+                        if(map[point.x()][point.y()] < lowest) {
+                            lowest = map[point.x()][point.y()];
+                        }
+                    }
+                    map[x][y] = lowest;
+                    foreach(QPoint point, neighbors) { //go though each neghbor and fix their values
+                        int oldVal = map[point.x()][point.y()];
+                        if(oldVal != lowest) { //force that point and its allies to the "low"
+                            QVector<QPoint> oldVec = returnMe.at(oldVal);
+                            qDebug()<<oldVec.count();
+                            foreach(QPoint changePoint, oldVec) { //make all of its allies a new value
+                                map[changePoint.x()][changePoint.y()] = lowest;
+                            }
+                            QVector<QPoint> appVec = returnMe.at(lowest);
+                            appVec += oldVec;
+                            returnMe.replace(lowest,appVec);
+                            map[point.x()][point.y()] = lowest;
+                            QVector<QPoint> empty;
+                            returnMe.replace(oldVal,empty); //make that old array empty
+                        }
+                    }
+                }
             }
+
             dia.setValue(dia.value() +1);
         }
     }
     dia.setValue(width*height);
 
-    //Now to store the storted points
-    QProgressDialog dia2("Saving neighbors",QString(),0,counter);
-    QHash<int,int> valueIndexTable;
-    foreach(QPoint point, points) {
-        int groupID = map[point.x()][point.y()];
-        if(valueIndexTable.contains(groupID)) {
-            QVector<QPoint> appendToMe = returnMe.at(valueIndexTable.value(groupID));
-            appendToMe.append(point);
-        } else {
-            QVector<QPoint> appendToMe;
-            appendToMe.append(point);
-            returnMe.append(appendToMe);
-            valueIndexTable.insert(groupID,returnMe.count()-1);
+    foreach(QVector<QPoint> group, returnMe) {
+        if(group.count() > 0) {
+            //qDebug()<<group.count();
         }
-        dia2.setValue(dia2.value() +1);
     }
-    dia2.setValue(counter);
 
-    qDebug()<<"Groups: " << returnMe.count();
+
+    //TODO: free map and quickMap
 
     return returnMe;
 }

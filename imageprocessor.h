@@ -66,8 +66,7 @@ private:
     static qreal calcVerticalConstrast(QImage input, QPoint center, int radius);
     static QVector<QPoint> findInterProximal(QImage input, QVector<QPoint> occPoints,QVector<QPoint> outlinePoints, int cutOff);
     static QVector<QVector<QPoint> > groupPoints(QVector<QPoint> points, int width, int height);
-    static void resetMatrix(int** map, int previousValue, int newValue, int width, int height);
-    static void mergeNeighbors(int** map, int x, int y,int width, int height);
+    static QVector<QPoint> findValidNeighbors(QPoint point, int** quickMap, int width, int height);
     static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
                                 int p1x,int p1y, int stDev, QPainter *input);
     static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,
