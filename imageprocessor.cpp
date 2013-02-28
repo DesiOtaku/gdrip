@@ -648,7 +648,7 @@ QVector<QVariant> ImageProcessor::findPulp(QImage input, QPoint startingPoint) {
             //qreal yPoint = startingPoint.y() + (r * sin(radians));
             //QPoint currentPoint((int)xPoint,(int)yPoint); //TODO: bilinear interpolation
             //now figure out the segment variance value
-            for(int m=r;r<=r+segmentSize;m++) {
+            for(int m=r;m<=r+segmentSize;m++) {
                 qreal xCheck = startingPoint.x() + (m * cos(radians));
                 qreal yCheck = startingPoint.y() + (m * sin(radians));
 

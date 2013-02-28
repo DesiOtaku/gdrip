@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QSettings settings("tshah", "gdrip");
     restoreState(settings.value("windowState").toByteArray());
+    restoreGeometry(settings.value("geometry").toByteArray());
 
     this->statusBar()->showMessage(tr("Ready"),3000);
 
@@ -89,8 +90,9 @@ void MainWindow::dropEvent(QDropEvent *event) {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-    QSettings settings("Tej A. Shah", "gdrip");
+    QSettings settings("tshah", "gdrip");
     settings.setValue("windowState", saveState());
+    settings.setValue("geometry", saveGeometry());
     QMainWindow::closeEvent(event);
 }
 
@@ -104,7 +106,7 @@ void MainWindow::openImage(QString fileName) {
 
 void MainWindow::openImage() {
 
-    QSettings settings("Tej A. Shah", "gdrip");
+    QSettings settings("tshah", "gdrip");
     QString startDir = settings.value("lastFolder",QDir::homePath()).toString();
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open Image"),
                                                     startDir,
