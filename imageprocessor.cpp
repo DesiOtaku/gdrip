@@ -276,6 +276,10 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
         returnMe.append(point);
     }
 
+//    foreach(QVector<QPoint> group, interProxGroups) {
+//        qDebug()<<group.count();
+//    }
+
     return returnMe;
 }
 
@@ -325,11 +329,11 @@ qreal ImageProcessor::calcVerticalConstrast(QImage input, QPoint center, int rad
         for(int scanY=yStart;scanY<=yEnd;scanY++) {
             int value = qRed(input.pixel(scanX,scanY));
             if(scanY < center.y()) { //white is good
-                if(value > 20) {
+                if(value > 40) {
                     sum++;
                 }
             } else if(scanY > center.y()) { //black is good
-                if(value < 20) {
+                if(value < 40) {
                     sum++;
                 }
             }
@@ -346,7 +350,7 @@ QImage ImageProcessor::invertImage(QImage input) {
 
 QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint leftOcc, QPoint rightOcc) {
     //int radius = (int) (.0001 * input.width()*input.height());
-    int radius = 16;
+    int radius = 25;
     QImage constrastedImg = constrastImage(input,55);
 
 
@@ -638,26 +642,68 @@ QVector<QVariant> ImageProcessor::findPulp(QImage input, QPoint startingPoint) {
     QVector<QVariant> returnMe;
     int endRad = 100;
     int segmentSize =5;
+    int segLeft = segmentSize/-2;
+    qreal pi = 3.14159265;
 
-    for(int deg=0;deg<360;deg++) {
+
+    for(qreal rads=0;rads < (2*pi);rads += .01) {
         int stageStatus =0; //each stage is changed in each major pixel value change
-        qreal radians = (deg* 3.14159265)/180;
-        QVector<qreal> segmentAverages;
+        //qreal radians = (deg* 3.14159265)/180;
+        qreal radians = rads;
+        QVector<qreal> segmentVariances;
+        qreal maxVariance=0;
+        qreal maxVarianceR =0;
         for(int r=1;r<endRad;r++) {
             //qreal xPoint = startingPoint.x() + (r * cos(radians));
             //qreal yPoint = startingPoint.y() + (r * sin(radians));
             //QPoint currentPoint((int)xPoint,(int)yPoint); //TODO: bilinear interpolation
             //now figure out the segment variance value
+            //QVector<int> values;
+            qreal weighSum =0;
             for(int m=r;m<=r+segmentSize;m++) {
                 qreal xCheck = startingPoint.x() + (m * cos(radians));
                 qreal yCheck = startingPoint.y() + (m * sin(radians));
-
+                QPoint lookAt((int)xCheck,(int)yCheck);
+                if(input.valid(lookAt)) {
+                    int val = qRed(input.pixel(lookAt));
+                    weighSum += pow(segLeft + (m-r),3)*val;
+                } else {
+                    m=r+segmentSize;
+                    weighSum =0;
+                }
+            }
+            weighSum = qAbs(weighSum);
+            if(weighSum > maxVariance) {
+                maxVariance = weighSum;
+                maxVarianceR = r;
             }
 
-
-
-
+//            if(maxVariance > 10) {
+//                qDebug()<<"Winner was: " << maxVariance;
+//                //int m = r + (segmentSize/2);
+//                int m = maxVarianceR + (segmentSize/2);
+//                qreal xCheck = startingPoint.x() + (m * cos(radians));
+//                qreal yCheck = startingPoint.y() + (m * sin(radians));
+//                returnMe.append(QPoint((int)xCheck,(int)yCheck));
+//                //r = endRad;
+//            }
         }
+        qDebug()<<"Winner was: " << maxVariance;
+        if(maxVariance > 4000) {
+            qDebug()<<"Winner was: " << maxVariance;
+            //int m = r + (segmentSize/2);
+            int m = maxVarianceR + (segmentSize/2);
+            qreal xCheck = startingPoint.x() + (m * cos(radians));
+            qreal yCheck = startingPoint.y() + (m * sin(radians));
+            returnMe.append(QPoint((int)xCheck,(int)yCheck));
+            //r = endRad;
+        }
+
+//        for(int m=maxVarianceR;m<=(maxVarianceR+segmentSize);m++) {
+//            qreal xCheck = startingPoint.x() + (m * cos(radians));
+//            qreal yCheck = startingPoint.y() + (m * sin(radians));
+//            returnMe.append(QPoint((int)xCheck,(int)yCheck));
+//        }
     }
 
 
