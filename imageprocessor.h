@@ -49,7 +49,7 @@ public:
     //Research functions
     static QImage drawOcculsion(QImage input);
     static QImage findBackground(QImage input);
-    static QVector<QVariant> findTeeth(QImage input);
+    static QVector<QPair<QPoint, QColor> > findTeeth(QImage input);
     static QVector<QVariant> findPulp(QImage input, QPoint startingPoint);
 
     
@@ -60,13 +60,15 @@ private:
     static QVector<QPoint> findOcculsionFaster(QImage input);
     static float calculateCenterValue(QImage input,int seeX,int seeY);
     static QVector<QLine> findEnamel(QImage input, QVector<QPoint> points, int cutOff);
-    static QVector<QPoint> findOutline(QImage input, int cutoff, QPoint leftOcc, QPoint rightOcc);
+    static QPair<QVector<QPoint>,QVector<QPoint> > findOutline(QImage input, int cutoff, QVector<QPoint> occlusion);
     static qreal findStdevArea(QImage input, QPoint center, int radius);
     static QVector<QPoint> findSameX(QPoint needle, QVector<QPoint> haystack);
     static qreal calcVerticalConstrast(QImage input, QPoint center, int radius);
     static QVector<QPoint> findInterProximal(QImage input, QVector<QPoint> occPoints,QVector<QPoint> outlinePoints, int cutOff);
-    static QVector<QVector<QPoint> > groupPoints(QVector<QPoint> points, int width, int height);
+    static QList<QVector<QPoint> > groupPoints(QVector<QPoint> points, int width, int height);
     static QVector<QPoint> findValidNeighbors(QPoint point, int** quickMap, int width, int height);
+    static QList<QVector<QPoint> > findEmbrasures(QList<QVector<QPoint> > interProxGroups,
+                                                  QVector<QPoint> occu, QVector<QPoint> maxOutline, QVector<QPoint> manOutline);
     static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
                                 int p1x,int p1y, int stDev, QPainter *input);
     static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,

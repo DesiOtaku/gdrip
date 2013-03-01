@@ -101,7 +101,7 @@
    <addaction name="actionInvert_Image"/>
    <addaction name="actionEqualize_Histogram"/>
    <addaction name="actionStrech_Histogram"/>
-   <addaction name="actionFind_Pulp"/>
+   <addaction name="actionFind_Teeth"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="histoDock">
@@ -475,6 +475,9 @@
    </property>
   </action>
   <action name="actionFind_Teeth">
+   <property name="icon">
+    <iconset theme="edit-find"/>
+   </property>
    <property name="text">
     <string>Find Teeth</string>
    </property>

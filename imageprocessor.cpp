@@ -232,7 +232,7 @@ void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
     }
 }
 
-QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
+QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     QImage useMe = constrastImage(input,65);
     QVector<QPoint> points = ImageProcessor::findOcculsionFaster(useMe);
 
@@ -253,34 +253,49 @@ QVector<QVariant> ImageProcessor::findTeeth(QImage input) {
     qDebug()<<"Average: "<< average;
     qDebug()<<"StDev: "<< standardDev;
 
-    QVector<QLine> lines = ImageProcessor::findEnamel(useMe,points, average + (5 * standardDev));
-
-    QVector<QVariant> returnMe;
+    QVector<QPair<QPoint, QColor> > returnMe;
 
     int cutoff = average + (5 * standardDev);
-    QVector<QPoint> outlines = ImageProcessor::findOutline(input,cutoff,points.first(),points.last());
-    QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,outlines,cutoff);
-    QVector<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
+    QPair<QVector<QPoint>,QVector<QPoint> > outlines = ImageProcessor::findOutline(input,cutoff,points);
+    QVector<QPoint> allOutlines = outlines.first + outlines.second;
+    QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
+    QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
+    QList<QVector<QPoint> > embrasures = findEmbrasures(interProxGroups,points,outlines.first,outlines.second);
 
 
 
     foreach(QPoint point, points) {
-        returnMe.append(point);
+        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
+        returnMe.append(addMe);
     }
 
-    foreach(QPoint point, outlines) {
-        returnMe.append(point);
+    foreach(QPoint point, outlines.first) { //maxillary
+        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
+        returnMe.append(addMe);
     }
 
-//    foreach(QPoint point, inter) {
-//        returnMe.append(point);
-//    }
+    foreach(QPoint point, outlines.second) { //manibular
+        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
+        returnMe.append(addMe);
+    }
 
+    int counter=255;
     foreach(QVector<QPoint> group, interProxGroups) {
-        if(group.count() > 0) {
-            foreach(QPoint point, group) {
-                returnMe.append(point);
-            }
+        QColor addColor(counter,counter/2,counter/3,150);
+        counter-= 25;
+        foreach(QPoint point, group) {
+            QPair<QPoint, QColor> addMe(point,addColor);
+            returnMe.append(addMe);
+        }
+    }
+
+    counter=255;
+    foreach(QVector<QPoint> group, embrasures) {
+        QColor addColor(counter/3,counter/2,counter,150);
+        counter-= 25;
+        foreach(QPoint point, group) {
+            QPair<QPoint, QColor> addMe(point,addColor);
+            returnMe.append(addMe);
         }
     }
 
@@ -323,10 +338,10 @@ qreal ImageProcessor::findStdevArea(QImage input, QPoint center, int radius) {
 
 qreal ImageProcessor::calcVerticalConstrast(QImage input, QPoint center, int radius) {
     qreal sum=0;
-//    int xStart = qMax(0,center.x()-radius);
-//    int xEnd = qMin(input.width()-1,center.x()+radius);
-    int xStart = qMax( center.x()-1,0);
-    int xEnd = qMin( center.x()+1,input.width()-1);
+    int xStart = qMax(0,center.x()-radius);
+    int xEnd = qMin(input.width()-1,center.x()+radius);
+//    int xStart = qMax( center.x()-1,0);
+//    int xEnd = qMin( center.x()+1,input.width()-1);
 
     int yStart = qMax(0,center.y()-radius);
     int yEnd = qMin(input.height()-1,center.y()+radius);
@@ -356,16 +371,23 @@ QImage ImageProcessor::invertImage(QImage input) {
     return returnMe;
 }
 
-QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint leftOcc, QPoint rightOcc) {
+QPair<QVector<QPoint>,QVector<QPoint> > ImageProcessor::findOutline(QImage input, int cutoff, QVector<QPoint> occlusion) {
     //int radius = (int) (.0001 * input.width()*input.height());
     int radius = 25;
+    //int radius = 50;
     QImage constrastedImg = constrastImage(input,55);
+    int offSetAmount = 10;
+    int pastOccAllowance = 10;
 
 
     //First, lets get the top left change point
     qreal highestStDev =0;
     int bestStartY=0;
-    QVector<QPoint> returnMe;
+
+    QVector<QPoint> maxPoints;
+    QVector<QPoint> manPoints;
+
+    QPoint leftOcc = occlusion.first();
 
     for(int currentY=radius;currentY<leftOcc.y();currentY++) {
         //Scan the area
@@ -377,14 +399,14 @@ QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint lef
         }
     }
 
-    returnMe.append(QPoint(0,bestStartY));
+    maxPoints.append(QPoint(0,bestStartY));
     int currentY = bestStartY;
 
     //Now, move right
     for(int currentX=1;currentX<input.width();currentX++) {
-        int bestOffset =-10;
+        int bestOffset =-1*offSetAmount;
         qreal bestOffsetValue=-1;
-        for(int offsetY=-10;offsetY<=10;offsetY++) {
+        for(int offsetY=-1*offSetAmount;offsetY<=offSetAmount;offsetY++) {
             qreal value = calcVerticalConstrast(constrastedImg,
                                                 QPoint(currentX,currentY+offsetY),radius);
             if(value > bestOffsetValue) {
@@ -392,8 +414,13 @@ QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint lef
                 bestOffsetValue = value;
             }
         }
-        returnMe.append(QPoint(currentX,currentY+bestOffset));
+
+        if((currentY+bestOffset) > (occlusion.at(currentX).y() - pastOccAllowance)) {
+            bestOffset = -1;
+        }
+
         currentY+=bestOffset;
+        maxPoints.append(QPoint(currentX,currentY));
     }
 
 
@@ -412,7 +439,7 @@ QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint lef
         }
     }
 
-    returnMe.append(QPoint(0,bestStartY));
+    manPoints.append(QPoint(0,bestStartY));
     currentY = bestStartY;
 
     //Now, move right
@@ -427,9 +454,16 @@ QVector<QPoint> ImageProcessor::findOutline(QImage input, int cutoff, QPoint lef
                 bestOffsetValue = value;
             }
         }
-        returnMe.append(QPoint(currentX,currentY+bestOffset));
+
+        if((currentY+bestOffset) < (occlusion.at(currentX).y() + pastOccAllowance)) {
+            bestOffset = 1;
+        }
+
         currentY+=bestOffset;
+        manPoints.append(QPoint(currentX,currentY));
     }
+
+    QPair<QVector<QPoint>,QVector<QPoint> > returnMe(maxPoints,manPoints);
     return returnMe;
 }
 
@@ -510,9 +544,10 @@ QVector<QPoint> ImageProcessor::findValidNeighbors(QPoint point, int **quickMap,
     return returnMe;
 }
 
-QVector<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int width, int height) {
+QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int width, int height) {
     //http://en.wikipedia.org/wiki/Connected-component_labeling
-    QVector<QVector<QPoint> > returnMe(points.count()); //same as "linked"
+    QList<QVector<QPoint> > returnMe; //same as "linked"
+    QVector<QPoint> emptySet;
 
     int** map = new int*[width]; //same as "labels"
     int** quickMap = new int*[width]; //just to make a fast lookup for points
@@ -526,6 +561,7 @@ QVector<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, in
     }
     foreach(QPoint point,points) {
         quickMap[point.x()][point.y()] = 1;
+        returnMe.append(emptySet);
     }
 
     int counter=0;//same as "NextLabel"
@@ -539,9 +575,7 @@ QVector<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, in
                 QPoint currentPoint(x,y);
                 QVector<QPoint> neighbors = findValidNeighbors(currentPoint,map,width,height);
                 if(neighbors.count() == 0) {
-                    QVector<QPoint> newVal;
-                    newVal.append(currentPoint);
-                    returnMe.replace(counter ,newVal);
+                    returnMe[counter].append(currentPoint);
                     map[x][y] = counter;
                     counter++;
                 } else {
@@ -555,19 +589,16 @@ QVector<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, in
                     foreach(QPoint point, neighbors) { //go though each neghbor and fix their values
                         int oldVal = map[point.x()][point.y()];
                         if(oldVal != lowest) { //force that point and its allies to the "low"
-                            QVector<QPoint> oldVec = returnMe.at(oldVal);
-                            qDebug()<<oldVec.count();
+                            QVector<QPoint> oldVec = returnMe[oldVal];
                             foreach(QPoint changePoint, oldVec) { //make all of its allies a new value
                                 map[changePoint.x()][changePoint.y()] = lowest;
                             }
-                            QVector<QPoint> appVec = returnMe.at(lowest);
-                            appVec += oldVec;
-                            returnMe.replace(lowest,appVec);
+                            returnMe[lowest] += oldVec;
                             map[point.x()][point.y()] = lowest;
-                            QVector<QPoint> empty;
-                            returnMe.replace(oldVal,empty); //make that old array empty
+                            returnMe[oldVal] = emptySet;
                         }
                     }
+                    returnMe[lowest].append(currentPoint);
                 }
             }
 
@@ -576,16 +607,61 @@ QVector<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, in
     }
     dia.setValue(width*height);
 
+    QList<QVector<QPoint> > realReturnMe;
+
     foreach(QVector<QPoint> group, returnMe) {
-        if(group.count() > 0) {
-            //qDebug()<<group.count();
+        if(group.count() > 500) { //more than 500 continous points
+            realReturnMe.append(group);
         }
     }
 
+    //Free up the memory we used for the arrays
+    for(int i=0;i<width;i++) {
+        delete[] map[i];
+        delete[] quickMap[i];
+    }
+    delete[] map;
+    delete[] quickMap;
 
-    //TODO: free map and quickMap
+    return realReturnMe;
+}
+
+QList<QVector<QPoint> > ImageProcessor::findEmbrasures(QList<QVector<QPoint> > interProxGroups,
+                                                       QVector<QPoint> occu, QVector<QPoint> maxOutline, QVector<QPoint> manOutline) {
+    QList<QVector<QPoint> > returnMe;
+
+    foreach(QVector<QPoint> group, interProxGroups) {
+        //first figure out if it is max or man
+        QPoint aPoint = group.first();
+        QVector<QPoint> occXVal = findSameX(aPoint,occu);
+        if(occXVal.count() > 0) {
+            QVector<QPoint> addMe;
+            if(aPoint.y() < occXVal.first().y()) { //maxillary
+                //first find the lowest point
+                QPoint lowest(-1,-1);
+                foreach(QPoint point, group) {
+                    if(point.y() > lowest.y()) {
+                        lowest = point;
+                    }
+                }
+                QPoint adder(lowest);
+                QPoint stopPoint = findSameX(adder,maxOutline).first();
+                while(adder.y() != stopPoint.y()) {
+                    addMe.append(adder);
+                    adder.setY(adder.y()+1);
+                }
+            } else { //mandibular
+
+            }
+            returnMe.append(addMe);
+        }
+
+
+    }
+
 
     return returnMe;
+
 }
 
 

@@ -148,25 +148,11 @@ void MainWindow::handleSaveImage() {
 
 void MainWindow::handleFindTeeth() {
     this->statusBar()->showMessage(tr("Finding Teeth"),3000);
-    QVector<QVariant> drawMe = ImageProcessor::findTeeth(ui->radioImageWidget->getOriginalImage());
-    int width = ui->radioImageWidget->getOriginalImage().width();
+    QVector<QPair<QPoint, QColor> > drawMe = ImageProcessor::findTeeth(ui->radioImageWidget->getOriginalImage());
     this->statusBar()->showMessage(tr("Found Teeth"),3000);
-    int counter=0;
-    foreach(QVariant var, drawMe) {
-        if(var.type() == QVariant::Line) {
-            ui->radioImageWidget->addLine(var.toLine(),QColor(255,0,0,100));
-        } else if(var.type() == QVariant::Point) {
-            if(counter < width) {
-                ui->radioImageWidget->addDot(var.toPoint(),QColor(255,0,0,100));
-            } else if(counter < width *2) {
-                ui->radioImageWidget->addDot(var.toPoint(),QColor(0,255,0,100));
-            }else if(counter < width *3) {
-                ui->radioImageWidget->addDot(var.toPoint(),QColor(0,0,255,100));
-            } else {
-                ui->radioImageWidget->addDot(var.toPoint(),QColor(255,0,255,100));
-            }
-            counter++;
-        }
+    for(int i=0;i<drawMe.count();i++) { //can't use foreach because C++ macros suck and the compiler will only complain about it
+        QPair<QPoint, QColor> item = drawMe.at(i);
+        ui->radioImageWidget->addDot(item.first,item.second);
     }
     this->statusBar()->showMessage(tr("Drawing Teeth"),3000);
 }
