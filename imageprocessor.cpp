@@ -291,7 +291,7 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 
     counter=255;
     foreach(QVector<QPoint> group, embrasures) {
-        QColor addColor(counter/3,counter/2,counter,150);
+        QColor addColor(counter/3,counter,counter,150);
         counter-= 25;
         foreach(QPoint point, group) {
             QPair<QPoint, QColor> addMe(point,addColor);
@@ -610,7 +610,8 @@ QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int 
     QList<QVector<QPoint> > realReturnMe;
 
     foreach(QVector<QPoint> group, returnMe) {
-        if(group.count() > 500) { //more than 500 continous points
+        if(group.count() > 750) { //more than 750 continous points
+            qDebug()<<group.count();
             realReturnMe.append(group);
         }
     }
@@ -624,6 +625,63 @@ QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int 
     delete[] quickMap;
 
     return realReturnMe;
+}
+
+QPoint ImageProcessor::closestPoint(QPoint start, QVector<QPoint> ends) {
+    QPoint returnMe = ends.first();
+    int bestDistance = INT_MAX;
+    foreach(QPoint end, ends) {
+        int currentDistance = (int) (pow(end.x()-start.x(),2) + pow(end.y()-start.y(),2));
+        //don't bother with the sqrt since we are not returning the distance
+        if(currentDistance < bestDistance) {
+            bestDistance = currentDistance;
+            returnMe = end;
+        }
+    }
+
+    return returnMe;
+}
+
+QVector<QPoint> ImageProcessor::makeLine(QPoint start, QPoint end) {
+    //http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm#Simplification
+    QVector<QPoint> returnMe;
+    int dx = qAbs(end.x() - start.x());
+    int dy = qAbs(end.y() - start.y());
+    int sx, sy;
+
+    if(start.x() < end.x()) {
+        sx = 1;
+    } else {
+        sx = -1;
+    }
+
+    if(start.y() < end.y()) {
+        sy = 1;
+    } else {
+        sy = -1;
+    }
+    int err = dx-dy;
+    bool goOn = true;
+
+    while(goOn) {
+        returnMe.append(start);
+        if(end == start) {
+            goOn = false;
+        } else {
+            int e2 = 2* err;
+            if(e2 > (-1 * dy)) {
+                err = err - dy;
+                start.setX(start.x() + sx);
+            }
+            if(e2 < dx) {
+                err = err + dx;
+                start.setY(start.y() + sy);
+            }
+        }
+    }
+
+
+    return returnMe;
 }
 
 QList<QVector<QPoint> > ImageProcessor::findEmbrasures(QList<QVector<QPoint> > interProxGroups,
@@ -644,19 +702,23 @@ QList<QVector<QPoint> > ImageProcessor::findEmbrasures(QList<QVector<QPoint> > i
                         lowest = point;
                     }
                 }
-                QPoint adder(lowest);
-                QPoint stopPoint = findSameX(adder,maxOutline).first();
-                while(adder.y() != stopPoint.y()) {
-                    addMe.append(adder);
-                    adder.setY(adder.y()+1);
-                }
+                QPoint start(lowest);
+                QPoint stop = closestPoint(lowest,maxOutline);
+                addMe = makeLine(start,stop);
             } else { //mandibular
-
+                //first find the highest point
+                QPoint highest(INT_MAX,INT_MAX);
+                foreach(QPoint point, group) {
+                    if(point.y() < highest.y()) {
+                        highest = point;
+                    }
+                }
+                QPoint start(highest);
+                QPoint stop = closestPoint(highest,manOutline);
+                addMe = makeLine(start,stop);
             }
             returnMe.append(addMe);
         }
-
-
     }
 
 

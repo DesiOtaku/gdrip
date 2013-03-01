@@ -76,6 +76,8 @@ private:
     static QVector<int> regValsBezier(int p0x,int p0y,int p2x,int p2y,
                                       int p1x,int p1y,int r, QImage img);
     static QVector<int> regionVals(int startX, int startY, int r, QImage img);
+    static QPoint closestPoint(QPoint start, QVector<QPoint> ends);
+    static QVector<QPoint> makeLine(QPoint start, QPoint end);
 
 };
 
