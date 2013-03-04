@@ -377,8 +377,7 @@ QPair<QVector<QPoint>,QVector<QPoint> > ImageProcessor::findOutline(QImage input
     //int radius = 50;
     QImage constrastedImg = constrastImage(input,55);
     int offSetAmount = 10;
-    int pastOccAllowance = 10;
-
+    int pastOccAllowance = 5;
 
     //First, lets get the top left change point
     qreal highestStDev =0;
