@@ -260,7 +260,8 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     QVector<QPoint> allOutlines = outlines.first + outlines.second;
     QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
     QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
-    QList<QVector<QPoint> > embrasures = findEmbrasures(interProxGroups,points,outlines.first,outlines.second);
+    QList<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
+    //QList<QVector<QPoint> > embrasures = findEmbrasures(interProxGroups,points,outlines.first,outlines.second);
 
 
 
@@ -289,15 +290,20 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
         }
     }
 
-    counter=255;
-    foreach(QVector<QPoint> group, embrasures) {
-        QColor addColor(counter/3,counter,counter,150);
-        counter-= 25;
-        foreach(QPoint point, group) {
-            QPair<QPoint, QColor> addMe(point,addColor);
-            returnMe.append(addMe);
-        }
+    foreach(QPoint point, proximalEnamel) {
+        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
+        returnMe.append(addMe);
     }
+
+//    counter=255;
+//    foreach(QVector<QPoint> group, embrasures) {
+//        QColor addColor(counter/3,counter,counter,150);
+//        counter-= 25;
+//        foreach(QPoint point, group) {
+//            QPair<QPoint, QColor> addMe(point,addColor);
+//            returnMe.append(addMe);
+//        }
+//    }
 
 //    foreach(QVector<QPoint> group, interProxGroups) {
 //        qDebug()<<group.count();
@@ -313,6 +319,36 @@ qreal ImageProcessor::findStdevArea(QImage input, QPoint center, int radius) {
 
     int yStart = qMax(0,center.y()-radius);
     int yEnd = qMin(input.height()-1,center.y()+radius);
+
+    for(int scanX=xStart;scanX<=xEnd;scanX++) {
+        for(int scanY=yStart;scanY<=yEnd;scanY++) {
+            localVals.append(qRed(input.pixel(scanX,scanY)));
+        }
+    }
+
+    //Get the average
+    qreal sum=0;
+    foreach(int val, localVals) {
+        sum+=val;
+    }
+    qreal average = sum / localVals.count();
+
+
+    //Now to get the stDEV
+    qreal variance=0;
+    foreach(int val, localVals) {
+        variance += pow(average-val,2);
+    }
+    return sqrt( variance / localVals.count());
+}
+
+qreal ImageProcessor::findStdevArea(QImage input, QPoint center, int width, int height) {
+    QVector<int> localVals;
+    int xStart = qMax(0,center.x()-width);
+    int xEnd = qMin(input.width()-1,center.x()+width);
+
+    int yStart = qMax(0,center.y()-height);
+    int yEnd = qMin(input.height()-1,center.y()+height);
 
     for(int scanX=xStart;scanX<=xEnd;scanX++) {
         for(int scanY=yStart;scanY<=yEnd;scanY++) {
@@ -496,6 +532,16 @@ QVector<QPoint> ImageProcessor::findSameX(QPoint needle, QVector<QPoint> haystac
     QVector<QPoint> returnMe;
     foreach(QPoint hay, haystack) {
         if(needle.x() == hay.x()) {
+            returnMe.append(hay);
+        }
+    }
+    return returnMe;
+}
+
+QVector<QPoint> ImageProcessor::findSameY(QPoint needle, QVector<QPoint> haystack) {
+    QVector<QPoint> returnMe;
+    foreach(QPoint hay, haystack) {
+        if(needle.y() == hay.y()) {
             returnMe.append(hay);
         }
     }
@@ -788,6 +834,65 @@ QImage ImageProcessor::spreadHistogram(QImage input) {
         }
     }
 
+    return returnMe;
+}
+
+
+
+QList<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
+                                                      QList<QVector<QPoint> > interProxGroups) {
+    QList<QPoint> returnMe;
+    foreach(QVector<QPoint> group, interProxGroups) {
+        QList<QPoint> leftPoints;
+        QList<QPoint> rightPoints;
+        //first get the high and low bounds of the entire group
+        int highestY = -1;
+        int lowestY = INT_MAX;
+        foreach(QPoint point, group) {
+            if(point.y() > highestY) {
+                highestY = point.y();
+            }
+            if(point.y() < lowestY) {
+                lowestY = point.y();
+            }
+        }
+
+        for(int y=lowestY;y<=highestY;y++) {
+            QVector<QPoint> sameY = findSameY(QPoint(-1,y),group);
+            QPoint highestX =QPoint(-1,y);
+            QPoint lowestX = QPoint(INT_MAX,y);
+            foreach(QPoint point, sameY) {
+                if(point.x() > highestX.x()) {
+                    highestX = point;
+                }
+                if(point.x() < lowestX.x()) {
+                    lowestX = point;
+                }
+            }
+            leftPoints.append(lowestX);
+            rightPoints.append(highestX);
+        }
+
+        foreach(QPoint point, leftPoints) {
+            QPoint currentPoint(point.x()-4,point.y());
+            int stDev = 0;
+            while(stDev < 30) {
+                stDev = findStdevArea(input,currentPoint,4,1);
+                currentPoint = QPoint(currentPoint.x()-1,point.y());
+                if(!input.valid(currentPoint)) {
+                    qDebug()<<"Stdev was: " << stDev;
+                    qDebug()<<"Gave up!" << stDev;
+                    stDev = 1024;
+                }
+            }
+            if(stDev != 1024) {
+                qDebug()<<"Got value when Stdev was: " << stDev;
+                returnMe.append(currentPoint);
+            }
+
+        }
+
+    }
     return returnMe;
 }
 
