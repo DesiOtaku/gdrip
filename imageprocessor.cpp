@@ -161,6 +161,20 @@ QVector<int> ImageProcessor::regionVals(int startX, int startY, int r, QImage im
     return vals;
 }
 
+qreal ImageProcessor::regionAvg(int startX, int startY, int r, QImage img) {
+    qreal sum=0;
+    int counter=0;
+    for(int x= startX - r; x < (startX + r); x++) {
+        for(int y = startY-r; y< (startY+r); y++) {
+            if(img.valid(x,y)) {
+                sum +=qRed(img.pixel(x,y));
+                counter++;
+            }
+        }
+    }
+    return sum/counter;
+}
+
 
 void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
                                      int p2y, int p1x, int p1y,
@@ -874,22 +888,37 @@ QList<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
         }
 
         foreach(QPoint point, leftPoints) {
-            QPoint currentPoint(point.x()-4,point.y());
-            int stDev = 0;
-            while(stDev < 30) {
-                stDev = findStdevArea(input,currentPoint,4,1);
-                currentPoint = QPoint(currentPoint.x()-1,point.y());
-                if(!input.valid(currentPoint)) {
-                    qDebug()<<"Stdev was: " << stDev;
-                    qDebug()<<"Gave up!" << stDev;
-                    stDev = 1024;
-                }
+            int jumpAmount = 4;
+            qreal currentAverage=0;
+            qreal nextAverage=0;
+            QPoint currentPoint(point.x() - jumpAmount, point.y());
+            QPoint nextPoint(currentPoint.x() - jumpAmount, point.y() );
+            while (currentAverage < (nextAverage +10) ) {
+                currentAverage = regionAvg(currentPoint.x(),currentPoint.y(),jumpAmount,input);
+                nextAverage = regionAvg(nextPoint.x(),nextPoint.y(),jumpAmount,input);
+                currentPoint = nextPoint;
+                nextPoint= QPoint(currentPoint.x() - jumpAmount, point.y() );
             }
-            if(stDev != 1024) {
-                qDebug()<<"Got value when Stdev was: " << stDev;
+            if(input.valid(currentPoint)) {
                 returnMe.append(currentPoint);
             }
+        }
 
+        foreach(QPoint point, rightPoints) {
+            int jumpAmount = 4;
+            qreal currentAverage=0;
+            qreal nextAverage=0;
+            QPoint currentPoint(point.x() + jumpAmount, point.y());
+            QPoint nextPoint(currentPoint.x() + jumpAmount, point.y() );
+            while (currentAverage < (nextAverage +10) ) {
+                currentAverage = regionAvg(currentPoint.x(),currentPoint.y(),jumpAmount,input);
+                nextAverage = regionAvg(nextPoint.x(),nextPoint.y(),jumpAmount,input);
+                currentPoint = nextPoint;
+                nextPoint= QPoint(currentPoint.x() + jumpAmount, point.y() );
+            }
+            if(input.valid(currentPoint)) {
+                returnMe.append(currentPoint);
+            }
         }
 
     }
@@ -966,8 +995,6 @@ QVector<QVariant> ImageProcessor::findPulp(QImage input, QPoint startingPoint) {
 //            returnMe.append(QPoint((int)xCheck,(int)yCheck));
 //        }
     }
-
-
 
     return returnMe;
 
