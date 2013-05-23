@@ -175,6 +175,20 @@ qreal ImageProcessor::regionAvg(int startX, int startY, int r, QImage img) {
     return sum/counter;
 }
 
+qreal ImageProcessor::regionAvg(int startX, int startY, int w, int h, QImage img) {
+    qreal sum=0;
+    int counter=0;
+    for(int x= startX - w; x <= (startX + w); x++) {
+        for(int y = startY-h; y<= (startY+h); y++) {
+            if(img.valid(x,y)) {
+                sum +=qRed(img.pixel(x,y));
+                counter++;
+            }
+        }
+    }
+    return sum/counter;
+}
+
 
 void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
                                      int p2y, int p1x, int p1y,
@@ -887,6 +901,7 @@ QList<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
             rightPoints.append(highestX);
         }
 
+        //now move away from the interproximal area
         foreach(QPoint point, leftPoints) {
             int jumpAmount = 4;
             qreal currentAverage=0;
@@ -894,8 +909,8 @@ QList<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
             QPoint currentPoint(point.x() - jumpAmount, point.y());
             QPoint nextPoint(currentPoint.x() - jumpAmount, point.y() );
             while (currentAverage < (nextAverage +10) ) {
-                currentAverage = regionAvg(currentPoint.x(),currentPoint.y(),jumpAmount,input);
-                nextAverage = regionAvg(nextPoint.x(),nextPoint.y(),jumpAmount,input);
+                currentAverage = regionAvg(currentPoint.x(),currentPoint.y(),jumpAmount,2,input);
+                nextAverage = regionAvg(nextPoint.x(),nextPoint.y(),jumpAmount,2,input);
                 currentPoint = nextPoint;
                 nextPoint= QPoint(currentPoint.x() - jumpAmount, point.y() );
             }
@@ -911,8 +926,8 @@ QList<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
             QPoint currentPoint(point.x() + jumpAmount, point.y());
             QPoint nextPoint(currentPoint.x() + jumpAmount, point.y() );
             while (currentAverage < (nextAverage +10) ) {
-                currentAverage = regionAvg(currentPoint.x(),currentPoint.y(),jumpAmount,input);
-                nextAverage = regionAvg(nextPoint.x(),nextPoint.y(),jumpAmount,input);
+                currentAverage = regionAvg(currentPoint.x(),currentPoint.y(),jumpAmount,2,input);
+                nextAverage = regionAvg(nextPoint.x(),nextPoint.y(),jumpAmount,2,input);
                 currentPoint = nextPoint;
                 nextPoint= QPoint(currentPoint.x() + jumpAmount, point.y() );
             }

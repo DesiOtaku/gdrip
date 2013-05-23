@@ -80,6 +80,7 @@ private:
                                       int p1x,int p1y,int r, QImage img);
     static QVector<int> regionVals(int startX, int startY, int r, QImage img);
     static qreal regionAvg(int startX, int startY, int r, QImage img);
+    static qreal regionAvg(int startX, int startY, int w, int h, QImage img);
     static QPoint closestPoint(QPoint start, QVector<QPoint> ends);
     static QVector<QPoint> makeLine(QPoint start, QPoint end);
 

@@ -113,8 +113,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>264</width>
-     <height>286</height>
+     <width>270</width>
+     <height>292</height>
     </size>
    </property>
    <property name="features">
@@ -476,7 +476,9 @@
   </action>
   <action name="actionFind_Teeth">
    <property name="icon">
-    <iconset theme="edit-find"/>
+    <iconset theme="edit-find">
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>Find Teeth</string>

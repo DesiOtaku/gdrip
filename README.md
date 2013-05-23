@@ -15,4 +15,5 @@ General function todo List:
 - Be able to "mark" locations like "this place is where you have the carries"
 - Have a "reference" pic for patients to see exactly what is wrong
 - Look for a way to extract an image from a DICOM file with having to implement all of it
-- Redo the ImageProcessor to use proper lines and markings
+- Make the measuring tool on the graphicsview
+- Hard code the enamel cutoff area
