@@ -25,6 +25,7 @@
 #include <QGraphicsView>
 #include <QGraphicsOpacityEffect>
 #include <QGraphicsEllipseItem>
+#include <QGraphicsTextItem>
 
 namespace Ui {
 class RadiographWidget;
@@ -88,6 +89,10 @@ signals:
 private:
     Ui::RadiographWidget *ui;
 
+    //Keep track of what the mouse is doing
+    enum MouseStatus {MOUSE_HOVER, MOUSE_MOVE, MOUSE_TRANS, MOUSE_STR_DIST,MOUSE_CUR_DIST, MOUSE_SEL_PT};
+    MouseStatus m_MouseStatus;
+
     //The image itself
     QImage m_Original;
     QImage m_NonContrastedImg;
@@ -100,12 +105,15 @@ private:
 
     //Relating to single measurement
     QGraphicsEllipseItem *m_CrossStartItem;
+    QGraphicsEllipseItem *m_CrossEndItem;
     QGraphicsLineItem *m_DistanceLineItem;
+    QGraphicsTextItem *m_DistanceTextItem;
     QPoint m_mouseStartPoint;
 
     //Relating to a single curved measurement
     QGraphicsEllipseItem *m_CurveCrossStartItem;
     QVector<QGraphicsLineItem *> m_CurveDistanceLineItems;
+    QGraphicsTextItem *m_CurveDistanceTextItem;
     QPoint m_mouseCurveStartPoint;
 
     //TODO: Angle measurement + line displacement
@@ -119,8 +127,6 @@ private:
     QVector<QGraphicsEllipseItem *> m_Markcircles;
     QVector<QGraphicsRectItem *> m_Markdots;
 
-    //Extra actions
-    bool m_IsSelectingPoint;
 
     //Private functions
     void updateHistogram();

@@ -32,6 +32,7 @@
 #include <QBitmap>
 #include <QPropertyAnimation>
 #include <QUrl>
+#include <QGraphicsDropShadowEffect>
 
 #include "math.h"
 #include "imageprocessor.h"
@@ -42,9 +43,9 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     ui(new Ui::RadiographWidget) {
     ui->setupUi(this);
     setMouseTracking(true);
+    m_MouseStatus = MOUSE_HOVER;
     m_BrightnessSet = 50;
     m_ContrastSet = 50;
-    m_IsSelectingPoint = false;
 
     QGraphicsScene *scene = new QGraphicsScene(this);
     m_PixItem= new QGraphicsPixmapItem(0,scene);
@@ -67,6 +68,12 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_CrossStartItem->setVisible(false);
     m_CrossStartItem->setOpacity(0.6);
 
+    m_CrossEndItem = new QGraphicsEllipseItem(-5,-5,10,10,0,scene);
+    m_CrossEndItem->setBrush(QBrush(Qt::blue));
+    m_CrossEndItem->setVisible(false);
+    m_CrossEndItem->setOpacity(0.6);
+
+
     m_CurveCrossStartItem  = new QGraphicsEllipseItem(-8,-8,10,10,0,scene);
     m_CurveCrossStartItem->setBrush(QBrush(Qt::red));
     m_CurveCrossStartItem->setVisible(false);
@@ -75,6 +82,21 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_DistanceLineItem = new QGraphicsLineItem(0,scene);
     m_DistanceLineItem->setVisible(false);
     m_DistanceLineItem->setPen(QPen(QBrush(QColor(0,0,255,100)),5,Qt::DotLine,Qt::RoundCap));
+
+    m_DistanceTextItem = new QGraphicsTextItem(0,scene);
+    m_DistanceTextItem->setVisible(false);
+    m_DistanceTextItem->setPlainText("0.00");
+    m_DistanceTextItem->setDefaultTextColor(QColor(0,0,255));
+    QFont defFont = m_DistanceTextItem->font();
+    defFont.setBold(true);
+    defFont.setPointSize(12);
+    m_DistanceTextItem->setFont(defFont);
+
+    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
+    shadow->setBlurRadius(50);
+    shadow->setColor(QColor(250,250,250));
+    shadow->setOffset(QPointF(0,0));
+    m_DistanceTextItem->setGraphicsEffect(shadow);
 
 }
 
@@ -192,7 +214,8 @@ void RadiographWidget::strechHisto() {
 }
 
 void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
-    if(event->buttons() == Qt::MiddleButton) {
+    //Not doing a swtich statement in case I want to use other factors
+    if(m_MouseStatus == MOUSE_TRANS) {
         QPoint diff = event->pos() - m_mouseStartPoint;
         QTransform trans;
         QRectF bounds = m_PixItem->boundingRect();
@@ -202,16 +225,18 @@ void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
         trans.translate(bounds.width()/-2,bounds.height()/-2);
         m_PixItem->setTransform(trans,true);
         m_mouseStartPoint = event->pos();
-
-    } else if(event->buttons() == Qt::RightButton) {
+    } else if(m_MouseStatus == MOUSE_STR_DIST) {
         QLineF line(m_CrossStartItem->pos(),this->mapToScene(event->pos()));
         m_DistanceLineItem->setLine(line);
         qreal ppmm = m_Original.dotsPerMeterX()/1000.0;
         qreal length = 1.0/(ppmm/ line.length());
-        messageUpdate(tr("Length is: %1 mm").arg(length),3000);
-    } else if(event->buttons() == Qt::LeftButton) {
+        m_DistanceTextItem->setPlainText(tr("%1 mm").arg(length));
+        m_DistanceTextItem->setPos(line.p2());
+        m_DistanceTextItem->setVisible(true);
+        //messageUpdate(tr("Length is: %1 mm").arg(length),3000);
+    } else if(event->buttons() == MOUSE_MOVE) {
         QGraphicsView::mouseMoveEvent(event);
-    } else if(m_CurveCrossStartItem->isVisible()) {
+    } else if(m_MouseStatus == MOUSE_CUR_DIST) {
         QPointF lastPoint = m_CurveDistanceLineItems.last()->line().p2();
         QPointF newPoint = this->mapToScene(event->pos());
         QLineF newLine(lastPoint,newPoint);
@@ -229,7 +254,7 @@ void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
         qreal length = 1.0/(ppmm/ sumDistance);
         messageUpdate(tr("Length is: %1 mm").arg(length),3000);
 
-    } else {
+    } else { //MOUSE_HOVER
         QPointF scenepos = this->mapToScene(event->pos());
         QPointF po = m_PixItem->mapFromScene(scenepos);
 
@@ -246,34 +271,54 @@ void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
 
 void RadiographWidget::mousePressEvent(QMouseEvent *event) {
     if(event->buttons() == Qt::MiddleButton) {
+        m_MouseStatus = MOUSE_TRANS;
         m_mouseStartPoint = event->pos();
         this->viewport()->setCursor(QCursor(Qt::SizeAllCursor));
     } else if(event->buttons() == Qt::RightButton) {
+        m_MouseStatus = MOUSE_STR_DIST;
         m_CrossStartItem->setPos(this->mapToScene(event->pos()));
         m_CrossStartItem->setVisible(true);
+        m_CrossEndItem->setVisible(false);
         this->viewport()->setCursor(QCursor(Qt::CrossCursor));
         QLineF line(m_CrossStartItem->pos(),m_CrossStartItem->pos());
         m_DistanceLineItem->setLine(line);
         m_DistanceLineItem->setVisible(true);
-    } else if(m_IsSelectingPoint) {
+    } else if(m_MouseStatus == MOUSE_SEL_PT) {
         QPointF scenepos = this->mapToScene(event->pos());
         QPointF po = m_PixItem->mapFromScene(scenepos);
         emit pointSelected(po.toPoint());
-        m_IsSelectingPoint = false;
-    } else {
+        m_MouseStatus = MOUSE_HOVER;
+    } else { //left click
         QGraphicsView::mousePressEvent(event);
+        m_MouseStatus =MOUSE_MOVE;
     }
 }
 
 void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
     this->viewport()->setCursor(QCursor(Qt::OpenHandCursor));
-    m_CrossStartItem->setVisible(false);
-    m_DistanceLineItem->setVisible(false);
+
+
+    if(m_MouseStatus = MOUSE_STR_DIST) {
+        m_CrossEndItem->setPos(this->mapToScene(event->pos()));
+        m_CrossEndItem->setVisible(true);
+        QPropertyAnimation *scaleAni = new QPropertyAnimation(m_DistanceTextItem,"scale",this);
+        scaleAni->setDuration(1000);
+        scaleAni->setEasingCurve(QEasingCurve::OutElastic);
+        scaleAni->setStartValue(.5);
+        scaleAni->setEndValue(1);
+        scaleAni->start(QAbstractAnimation::DeleteWhenStopped);
+    }
+    m_MouseStatus = MOUSE_HOVER;
+
+
+    //m_CrossStartItem->setVisible(false);
+    //m_DistanceLineItem->setVisible(false);
     QGraphicsView::mouseReleaseEvent(event);
 }
 
 void RadiographWidget::keyPressEvent(QKeyEvent *event) {
     if((event->key() == Qt::Key_C) && (!event->isAutoRepeat())) {
+        m_MouseStatus = MOUSE_CUR_DIST;
         m_mouseCurveStartPoint = QPoint(); //it will be null
         QPoint widgetPoint = this->mapFromGlobal(QCursor::pos());
         m_CurveCrossStartItem->setPos(this->mapToScene(widgetPoint));
@@ -358,6 +403,6 @@ QImage RadiographWidget::getMarkedImage() {
 }
 
 void RadiographWidget::selectPoint() {
-    m_IsSelectingPoint = true;
+    m_MouseStatus = MOUSE_SEL_PT;
     this->viewport()->setCursor(QCursor(Qt::CrossCursor));
 }

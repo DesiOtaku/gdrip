@@ -293,30 +293,30 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 
 
 
-    foreach(QPoint point, points) {
-        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, points) {
+//        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
+//        returnMe.append(addMe);
+//    }
 
-    foreach(QPoint point, outlines.first) { //maxillary
-        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, outlines.first) { //maxillary
+//        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
+//        returnMe.append(addMe);
+//    }
 
-    foreach(QPoint point, outlines.second) { //manibular
-        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, outlines.second) { //manibular
+//        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
+//        returnMe.append(addMe);
+//    }
 
-    int counter=255;
-    foreach(QVector<QPoint> group, interProxGroups) {
-        QColor addColor(counter,counter/2,counter/3,150);
-        counter-= 25;
-        foreach(QPoint point, group) {
-            QPair<QPoint, QColor> addMe(point,addColor);
-            returnMe.append(addMe);
-        }
-    }
+//    int counter=255;
+//    foreach(QVector<QPoint> group, interProxGroups) {
+//        QColor addColor(counter,counter/2,counter/3,150);
+//        counter-= 25;
+//        foreach(QPoint point, group) {
+//            QPair<QPoint, QColor> addMe(point,addColor);
+//            returnMe.append(addMe);
+//        }
+//    }
 
     foreach(QPoint point, proximalEnamel) {
         QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
@@ -870,6 +870,8 @@ QImage ImageProcessor::spreadHistogram(QImage input) {
 QList<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
                                                       QList<QVector<QPoint> > interProxGroups) {
     QList<QPoint> returnMe;
+    int starter = (int)(input.width() * 0.005);
+    int ender = (int)(input.width() * 0.05);
     foreach(QVector<QPoint> group, interProxGroups) {
         QList<QPoint> leftPoints;
         QList<QPoint> rightPoints;
@@ -901,38 +903,47 @@ QList<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
             rightPoints.append(highestX);
         }
 
+        int jumpAmount = 4;
         //now move away from the interproximal area
-        foreach(QPoint point, leftPoints) {
-            int jumpAmount = 4;
+        foreach(QPoint point, leftPoints) { //move left from interproximal
             qreal currentAverage=0;
             qreal nextAverage=0;
-            QPoint currentPoint(point.x() - jumpAmount, point.y());
+            QPoint currentPoint(point.x() - starter, point.y());
             QPoint nextPoint(currentPoint.x() - jumpAmount, point.y() );
-            while (currentAverage < (nextAverage +10) ) {
+            int endX = point.x() - ender;
+            while ((currentAverage < (nextAverage +5) ) && (currentPoint.x() > endX)) {
                 currentAverage = regionAvg(currentPoint.x(),currentPoint.y(),jumpAmount,2,input);
                 nextAverage = regionAvg(nextPoint.x(),nextPoint.y(),jumpAmount,2,input);
                 currentPoint = nextPoint;
                 nextPoint= QPoint(currentPoint.x() - jumpAmount, point.y() );
             }
-            if(input.valid(currentPoint)) {
+            if(input.valid(currentPoint) && (currentPoint.x() > endX)) {
                 returnMe.append(currentPoint);
+                while(currentPoint.x() != point.x()) {
+                    currentPoint.setX(currentPoint.x()+1);
+                    returnMe.append(currentPoint);
+                }
             }
         }
 
-        foreach(QPoint point, rightPoints) {
-            int jumpAmount = 4;
+        foreach(QPoint point, rightPoints) { //move right from interproximal
             qreal currentAverage=0;
             qreal nextAverage=0;
-            QPoint currentPoint(point.x() + jumpAmount, point.y());
+            QPoint currentPoint(point.x() + starter, point.y());
             QPoint nextPoint(currentPoint.x() + jumpAmount, point.y() );
-            while (currentAverage < (nextAverage +10) ) {
+            int endX = point.x() + ender;
+            while ((currentAverage < (nextAverage +5) ) && (currentPoint.x() < endX)) {
                 currentAverage = regionAvg(currentPoint.x(),currentPoint.y(),jumpAmount,2,input);
                 nextAverage = regionAvg(nextPoint.x(),nextPoint.y(),jumpAmount,2,input);
                 currentPoint = nextPoint;
                 nextPoint= QPoint(currentPoint.x() + jumpAmount, point.y() );
             }
-            if(input.valid(currentPoint)) {
+            if(input.valid(currentPoint) && (currentPoint.x() < endX)) {
                 returnMe.append(currentPoint);
+                while(currentPoint.x() != point.x()) {
+                    currentPoint.setX(currentPoint.x()-1);
+                    returnMe.append(currentPoint);
+                }
             }
         }
 
