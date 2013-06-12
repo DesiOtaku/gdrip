@@ -29,6 +29,7 @@ HistoWidget::HistoWidget(QWidget *parent) :
 {
     setMouseTracking(true);
     m_HighlightValue=0;
+    m_SelectedValue =-1;
 }
 
 /**
@@ -77,6 +78,10 @@ void HistoWidget::paintEvent(QPaintEvent *) {
             p.setPen(QColor(255,70,40));
             p.drawLine(i,this->height(),i,0);
             p.setPen(histoColor);
+        } if(i == m_SelectedValue) {
+            p.setPen(QColor(40,70,255));
+            p.drawLine(i,this->height(),i,0);
+            p.setPen(histoColor);
         }
         p.drawLine(i,this->height(),i,this->height()-length);
     }
@@ -90,4 +95,10 @@ void HistoWidget::paintEvent(QPaintEvent *) {
  */
 void HistoWidget::mouseMoveEvent(QMouseEvent *event) {
     this->setToolTip(QString::number(event->x()));
+}
+
+void HistoWidget::mousePressEvent(QMouseEvent *event) {
+    m_SelectedValue = event->x();
+    emit valueSelected(event->x());
+    this->repaint();
 }

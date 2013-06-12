@@ -34,6 +34,10 @@ public:
     explicit HistoWidget(QWidget *parent = 0);
     void paintEvent(QPaintEvent *);
     void mouseMoveEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+
+signals:
+    void valueSelected(int selectedValue);
 
 public slots:
     void highlightValue(int value);
@@ -42,6 +46,7 @@ public slots:
 private:
     QVector<float> m_Occ;
     int m_HighlightValue;
+    int m_SelectedValue;
     
 };
 

@@ -59,6 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->histoWidget, SLOT(setHistogram(QVector<float>)));
     connect(ui->radioImageWidget,SIGNAL(pixelValueHighlighted(int)),
             ui->histoWidget, SLOT(highlightValue(int)));
+    connect(ui->histoWidget, SIGNAL(valueSelected(int)), this, SLOT(handleHistoSelectPoint(int)));
 
     QSettings settings("tshah", "gdrip");
     restoreState(settings.value("windowState").toByteArray());
@@ -175,4 +176,19 @@ void MainWindow::handlePulpPointSelected(QPoint selectedPoint) {
         }
     }
     this->statusBar()->showMessage(tr("Drawing the pulp"),3000);
+}
+
+
+void MainWindow::handleHistoSelectPoint(int valueSelected) {
+    ui->radioImageWidget->clearMarks();
+    QImage lookAt = ui->radioImageWidget->getAlteredImage();
+    for(int x=0;x<lookAt.width();x++) {
+        for(int y=0;y<lookAt.height();y++) {
+            int value = qRed(lookAt.pixel(x,y));
+            if(value == valueSelected) {
+                ui->radioImageWidget->addDot(QPoint(x,y),QColor(0,0,255));
+            }
+        }
+    }
+
 }

@@ -46,6 +46,7 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_MouseStatus = MOUSE_HOVER;
     m_BrightnessSet = 50;
     m_ContrastSet = 50;
+    m_LastRotate =0;
 
     QGraphicsScene *scene = new QGraphicsScene(this);
     m_PixItem= new QGraphicsPixmapItem(0,scene);
@@ -116,22 +117,18 @@ void RadiographWidget::setImage(QImage img) {
     m_MJItem->setRect(m_PixItem->boundingRect());
     newHistogram(ImageProcessor::findOccurrences(m_Original));
 
-    foreach(QGraphicsLineItem *item, m_Marklines) {
-        this->scene()->removeItem(item);
-        delete item;
-    }
-    m_Marklines.clear();
+    clearMarks();
 
-    foreach(QGraphicsRectItem *item, m_Markdots) {
-        this->scene()->removeItem(item);
-        delete item;
-    }
-    m_Markdots.clear();
+    m_CrossEndItem->setVisible(false);
+    m_CrossStartItem->setVisible(false);
+    m_DistanceLineItem->setVisible(false);
+    m_DistanceTextItem->setVisible(false);
 
 
     QTransform trans;
     m_PixItem->setTransform(trans);
     this->resetMatrix();
+    this->centerOn(m_PixItem);
 
     QPropertyAnimation *ani = new QPropertyAnimation(this);
     ani->setTargetObject(this);
@@ -145,16 +142,38 @@ void RadiographWidget::setImage(QImage img) {
     ani->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
+void RadiographWidget::clearMarks() {
+    foreach(QGraphicsLineItem *item, m_Marklines) {
+        this->scene()->removeItem(item);
+        delete item;
+    }
+    m_Marklines.clear();
+
+    foreach(QGraphicsRectItem *item, m_Markdots) {
+        this->scene()->removeItem(item);
+        delete item;
+    }
+    m_Markdots.clear();
+}
+
 void RadiographWidget::setZoom(int newZoom) {
     float amount =  (newZoom/50.0);
     //m_PixItem->setScale(amount); //I have no clue why this moves the screen over center
     this->resetMatrix(); //don't worry, this doesn't actually show
     this->scale(amount,amount); //we do the whole scene because we want the markings
     //to scale as well. It also makes the distance calculation a lot easier
+
+    //Because we reset the matrix, we have to also redo the rotation
+    int oldRot = m_LastRotate;
+    m_LastRotate =0;
+    setRotation(oldRot);
 }
 
 void RadiographWidget::setRotation(int angle) {
-    m_PixItem->setRotation(angle);
+    int diff = angle - m_LastRotate;
+    this->rotate(diff);
+    m_LastRotate = angle;
+    //m_PixItem->setRotation(angle);
 }
 
 void RadiographWidget::setBrightness(int amount) {
@@ -283,6 +302,7 @@ void RadiographWidget::mousePressEvent(QMouseEvent *event) {
         QLineF line(m_CrossStartItem->pos(),m_CrossStartItem->pos());
         m_DistanceLineItem->setLine(line);
         m_DistanceLineItem->setVisible(true);
+        m_DistanceTextItem->setVisible(false); //in case the user just right clicks and doesn't move mouse
     } else if(m_MouseStatus == MOUSE_SEL_PT) {
         QPointF scenepos = this->mapToScene(event->pos());
         QPointF po = m_PixItem->mapFromScene(scenepos);
@@ -295,10 +315,7 @@ void RadiographWidget::mousePressEvent(QMouseEvent *event) {
 }
 
 void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
-    this->viewport()->setCursor(QCursor(Qt::OpenHandCursor));
-
-
-    if(m_MouseStatus = MOUSE_STR_DIST) {
+    if(m_MouseStatus == MOUSE_STR_DIST) {
         m_CrossEndItem->setPos(this->mapToScene(event->pos()));
         m_CrossEndItem->setVisible(true);
         QPropertyAnimation *scaleAni = new QPropertyAnimation(m_DistanceTextItem,"scale",this);
@@ -309,6 +326,7 @@ void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
         scaleAni->start(QAbstractAnimation::DeleteWhenStopped);
     }
     m_MouseStatus = MOUSE_HOVER;
+    this->viewport()->setCursor(QCursor(Qt::OpenHandCursor));
 
 
     //m_CrossStartItem->setVisible(false);

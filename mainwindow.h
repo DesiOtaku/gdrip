@@ -53,6 +53,7 @@ public slots:
     void handleFindTeeth();
     void handleFindPulp();
     void handlePulpPointSelected(QPoint selectedPoint);
+    void handleHistoSelectPoint(int valueSelected);
     
 private:
     Ui::MainWindow *ui;

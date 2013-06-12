@@ -49,6 +49,7 @@ public:
     QImage getMarkedImage();
 
     void setImage(QImage img);
+    void clearMarks();
 
     //When doing the anaylsis, it would be nice to have this added in
     void addLine(QLine line, QColor color);
@@ -102,6 +103,7 @@ private:
     //Keeping track of user input when we do crazy things
     int m_BrightnessSet;
     int m_ContrastSet;
+    int m_LastRotate;
 
     //Relating to single measurement
     QGraphicsEllipseItem *m_CrossStartItem;
@@ -126,7 +128,6 @@ private:
     QVector<QGraphicsLineItem *> m_Marklines;
     QVector<QGraphicsEllipseItem *> m_Markcircles;
     QVector<QGraphicsRectItem *> m_Markdots;
-
 
     //Private functions
     void updateHistogram();
