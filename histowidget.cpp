@@ -94,6 +94,11 @@ void HistoWidget::paintEvent(QPaintEvent *) {
  * @param event
  */
 void HistoWidget::mouseMoveEvent(QMouseEvent *event) {
+    if(event->buttons() == Qt::LeftButton) {
+        m_SelectedValue = event->x();
+        emit valueSelected(event->x());
+        this->repaint();
+    }
     this->setToolTip(QString::number(event->x()));
 }
 
@@ -102,3 +107,5 @@ void HistoWidget::mousePressEvent(QMouseEvent *event) {
     emit valueSelected(event->x());
     this->repaint();
 }
+
+

@@ -293,30 +293,30 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 
 
 
-//    foreach(QPoint point, points) {
-//        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
-//        returnMe.append(addMe);
-//    }
+    foreach(QPoint point, points) {
+        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
+        returnMe.append(addMe);
+    }
 
-//    foreach(QPoint point, outlines.first) { //maxillary
-//        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
-//        returnMe.append(addMe);
-//    }
+    foreach(QPoint point, outlines.first) { //maxillary
+        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
+        returnMe.append(addMe);
+    }
 
-//    foreach(QPoint point, outlines.second) { //manibular
-//        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
-//        returnMe.append(addMe);
-//    }
+    foreach(QPoint point, outlines.second) { //manibular
+        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
+        returnMe.append(addMe);
+    }
 
-//    int counter=255;
-//    foreach(QVector<QPoint> group, interProxGroups) {
-//        QColor addColor(counter,counter/2,counter/3,150);
-//        counter-= 25;
-//        foreach(QPoint point, group) {
-//            QPair<QPoint, QColor> addMe(point,addColor);
-//            returnMe.append(addMe);
-//        }
-//    }
+    int counter=255;
+    foreach(QVector<QPoint> group, interProxGroups) {
+        QColor addColor(counter,counter/2,counter/3,150);
+        counter-= 25;
+        foreach(QPoint point, group) {
+            QPair<QPoint, QColor> addMe(point,addColor);
+            returnMe.append(addMe);
+        }
+    }
 
     foreach(QPoint point, proximalEnamel) {
         QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));

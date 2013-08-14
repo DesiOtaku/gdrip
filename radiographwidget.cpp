@@ -52,7 +52,8 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_PixItem= new QGraphicsPixmapItem(0,scene);
 
     this->setScene(scene);
-    this->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    //this->setRenderHints(QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
+
 
     m_MJItem = new QGraphicsRectItem(m_PixItem->boundingRect(),m_PixItem);
     m_MJItem->setBrush(QBrush(Qt::green)); //if you actually see green, then there was
@@ -98,6 +99,21 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     shadow->setColor(QColor(250,250,250));
     shadow->setOffset(QPointF(0,0));
     m_DistanceTextItem->setGraphicsEffect(shadow);
+
+    //m_CurveDistanceTextItem
+    m_CurveDistanceTextItem = new QGraphicsTextItem(0,scene);
+    m_CurveDistanceTextItem->setVisible(false);
+    m_CurveDistanceTextItem->setPlainText("0.00");
+    m_CurveDistanceTextItem->setDefaultTextColor(QColor(255,0,0));
+    m_CurveDistanceTextItem->setFont(defFont);
+
+    QGraphicsDropShadowEffect *shadow2 = new QGraphicsDropShadowEffect(this);
+    shadow2->setBlurRadius(50);
+    shadow2->setColor(QColor(250,250,250));
+    shadow2->setOffset(QPointF(0,0));
+    m_CurveDistanceTextItem->setGraphicsEffect(shadow2);
+
+
 
 }
 
@@ -154,6 +170,12 @@ void RadiographWidget::clearMarks() {
         delete item;
     }
     m_Markdots.clear();
+
+    foreach(QGraphicsLineItem *item,m_CurveDistanceLineItems) {
+        this->scene()->removeItem(item);
+        delete item;
+    }
+    m_CurveDistanceLineItems.clear();
 }
 
 void RadiographWidget::setZoom(int newZoom) {
@@ -268,10 +290,11 @@ void RadiographWidget::mouseMoveEvent(QMouseEvent *event) {
         foreach(QGraphicsLineItem *addItem,m_CurveDistanceLineItems) {
             sumDistance+= addItem->line().length();
         }
-
         qreal ppmm = m_Original.dotsPerMeterX()/1000.0;
         qreal length = 1.0/(ppmm/ sumDistance);
-        messageUpdate(tr("Length is: %1 mm").arg(length),3000);
+        m_CurveDistanceTextItem->setVisible(true);
+        m_CurveDistanceTextItem->setPos(lastPoint);
+        m_CurveDistanceTextItem->setPlainText(tr("%1 mm").arg(length));
 
     } else { //MOUSE_HOVER
         QPointF scenepos = this->mapToScene(event->pos());
@@ -337,6 +360,13 @@ void RadiographWidget::mouseReleaseEvent(QMouseEvent *event) {
 void RadiographWidget::keyPressEvent(QKeyEvent *event) {
     if((event->key() == Qt::Key_C) && (!event->isAutoRepeat())) {
         m_MouseStatus = MOUSE_CUR_DIST;
+
+        foreach(QGraphicsLineItem *item,m_CurveDistanceLineItems) {
+            this->scene()->removeItem(item);
+            delete item;
+        }
+        m_CurveDistanceLineItems.clear();
+
         m_mouseCurveStartPoint = QPoint(); //it will be null
         QPoint widgetPoint = this->mapFromGlobal(QCursor::pos());
         m_CurveCrossStartItem->setPos(this->mapToScene(widgetPoint));
@@ -358,11 +388,8 @@ void RadiographWidget::keyReleaseEvent(QKeyEvent *event) {
         m_CurveCrossStartItem->setVisible(false);
         this->viewport()->setCursor(QCursor(Qt::OpenHandCursor));
 
-        foreach(QGraphicsLineItem *item,m_CurveDistanceLineItems) {
-            this->scene()->removeItem(item);
-            delete item;
-        }
-        m_CurveDistanceLineItems.clear();
+
+        m_MouseStatus = MOUSE_HOVER;
     }
     QGraphicsView::keyReleaseEvent(event);
 }
