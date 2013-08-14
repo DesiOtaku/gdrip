@@ -18,6 +18,7 @@
 
 #include <QProgressDialog>
 #include <QDebug>
+#include <QTime>
 
 #include "math.h"
 
@@ -287,41 +288,53 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     QPair<QVector<QPoint>,QVector<QPoint> > outlines = ImageProcessor::findOutline(input,cutoff,points);
     QVector<QPoint> allOutlines = outlines.first + outlines.second;
     QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
-    QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height());
-    QList<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
+    QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1);
+    QVector<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
+    QList<QVector<QPoint> > enamelGroups = groupPoints(proximalEnamel,input.width(),input.height(),3,3);
     //QList<QVector<QPoint> > embrasures = findEmbrasures(interProxGroups,points,outlines.first,outlines.second);
 
 
 
-    foreach(QPoint point, points) {
-        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, points) {
+//        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
+//        returnMe.append(addMe);
+//    }
 
-    foreach(QPoint point, outlines.first) { //maxillary
-        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, outlines.first) { //maxillary
+//        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
+//        returnMe.append(addMe);
+//    }
 
-    foreach(QPoint point, outlines.second) { //manibular
-        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, outlines.second) { //manibular
+//        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
+//        returnMe.append(addMe);
+//    }
 
-    int counter=255;
-    foreach(QVector<QPoint> group, interProxGroups) {
-        QColor addColor(counter,counter/2,counter/3,150);
-        counter-= 25;
+//    int counter=255;
+//    foreach(QVector<QPoint> group, interProxGroups) {
+//        QColor addColor(counter,counter/2,counter/3,150);
+//        counter-= 25;
+//        foreach(QPoint point, group) {
+//            QPair<QPoint, QColor> addMe(point,addColor);
+//            returnMe.append(addMe);
+//        }
+//    }
+
+//    foreach(QPoint point, proximalEnamel) {
+//        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
+//        returnMe.append(addMe);
+//    }
+
+    int counter=0;
+    foreach(QVector<QPoint> group, enamelGroups) {
+        QColor addColor(QColor::colorNames().at(counter++));
+        addColor.setAlpha(150);
         foreach(QPoint point, group) {
             QPair<QPoint, QColor> addMe(point,addColor);
             returnMe.append(addMe);
         }
     }
 
-    foreach(QPoint point, proximalEnamel) {
-        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
-        returnMe.append(addMe);
-    }
 
 //    counter=255;
 //    foreach(QVector<QPoint> group, embrasures) {
@@ -599,13 +612,13 @@ QVector<QPoint> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> 
     return returnMe;
 }
 
-QVector<QPoint> ImageProcessor::findValidNeighbors(QPoint point, int **quickMap, int width, int height) {
+QVector<QPoint> ImageProcessor::findValidNeighbors(QPoint point, int **quickMap, int width, int height, int hozJump=1, int verJump=1) {
     QVector<QPoint> returnMe;
-    int xStart = qMax(0,point.x()-1);
-    int xEnd = qMin(width-1,point.x()+1);
+    int xStart = qMax(0,point.x()-hozJump);
+    int xEnd = qMin(width-1,point.x()+hozJump);
 
-    int yStart = qMax(0,point.y()-1);
-    int yEnd = qMin(height-1,point.y()+1);
+    int yStart = qMax(0,point.y()-verJump);
+    int yEnd = qMin(height-1,point.y()+verJump);
 
     for(int currentX=xStart;currentX<=xEnd;currentX++) {
         for(int currentY=yStart;currentY<=yEnd;currentY++) {
@@ -617,7 +630,7 @@ QVector<QPoint> ImageProcessor::findValidNeighbors(QPoint point, int **quickMap,
     return returnMe;
 }
 
-QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int width, int height) {
+QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int width, int height, int hozDiff=1, int verDiff=1) {
     //http://en.wikipedia.org/wiki/Connected-component_labeling
     QList<QVector<QPoint> > returnMe; //same as "linked"
     QVector<QPoint> emptySet;
@@ -646,7 +659,7 @@ QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int 
         for(int y=0;y<height;y++) {
             if(quickMap[x][y] != -1) { //if it is not background
                 QPoint currentPoint(x,y);
-                QVector<QPoint> neighbors = findValidNeighbors(currentPoint,map,width,height);
+                QVector<QPoint> neighbors = findValidNeighbors(currentPoint,map,width,height,hozDiff,verDiff);
                 if(neighbors.count() == 0) {
                     returnMe[counter].append(currentPoint);
                     map[x][y] = counter;
@@ -867,9 +880,9 @@ QImage ImageProcessor::spreadHistogram(QImage input) {
 
 
 
-QList<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
+QVector<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
                                                       QList<QVector<QPoint> > interProxGroups) {
-    QList<QPoint> returnMe;
+    QVector<QPoint> returnMe;
     int starter = (int)(input.width() * 0.005);
     int ender = (int)(input.width() * 0.05);
     foreach(QVector<QPoint> group, interProxGroups) {

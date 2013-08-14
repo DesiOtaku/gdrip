@@ -67,11 +67,11 @@ private:
     static QVector<QPoint> findSameY(QPoint needle, QVector<QPoint> haystack);
     static qreal calcVerticalConstrast(QImage input, QPoint center, int radius);
     static QVector<QPoint> findInterProximal(QImage input, QVector<QPoint> occPoints,QVector<QPoint> outlinePoints, int cutOff);
-    static QList<QVector<QPoint> > groupPoints(QVector<QPoint> points, int width, int height);
-    static QVector<QPoint> findValidNeighbors(QPoint point, int** quickMap, int width, int height);
+    static QList<QVector<QPoint> > groupPoints(QVector<QPoint> points, int width, int height, int hozDiff, int verDiff);
+    static QVector<QPoint> findValidNeighbors(QPoint point, int** quickMap, int width, int height, int hozJump, int verJump);
     static QList<QVector<QPoint> > findEmbrasures(QList<QVector<QPoint> > interProxGroups,
                                                   QVector<QPoint> occu, QVector<QPoint> maxOutline, QVector<QPoint> manOutline);
-    static QList<QPoint> findInterProximalEnamel(QImage input, QList<QVector<QPoint> > interProxGroups);
+    static QVector<QPoint> findInterProximalEnamel(QImage input, QList<QVector<QPoint> > interProxGroups);
     static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
                                 int p1x,int p1y, int stDev, QPainter *input);
     static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,
