@@ -55,7 +55,6 @@ public:
     
 private:
     static QImage thresholdImage(QImage input, int cutoff);
-    static void drawBezier(int p0x,int p0y,int p2x,int p2y,int p1x,int p1y, QPainter *img);
     static QVector<int> findOcculsion(QImage input);
     static QVector<QPoint> findOcculsionFaster(QImage input);
     static float calculateCenterValue(QImage input,int seeX,int seeY);
@@ -72,12 +71,7 @@ private:
     static QList<QVector<QPoint> > findEmbrasures(QList<QVector<QPoint> > interProxGroups,
                                                   QVector<QPoint> occu, QVector<QPoint> maxOutline, QVector<QPoint> manOutline);
     static QVector<QPoint> findInterProximalEnamel(QImage input, QList<QVector<QPoint> > interProxGroups);
-    static void drawBezierDer(int p0x,int p0y,int p2x,int p2y,
-                                int p1x,int p1y, int stDev, QPainter *input);
-    static int computeBezierSum(int p0x,int p0y,int p2x,int p2y,
-                                int p1x,int p1y, int best, QImage img);
-    static QVector<int> regValsBezier(int p0x,int p0y,int p2x,int p2y,
-                                      int p1x,int p1y,int r, QImage img);
+    static QList<QPoint> findOddPoints(QList<QVector<QPoint> > enamelGroups, QImage input);
     static QVector<int> regionVals(int startX, int startY, int r, QImage img);
     static qreal regionAvg(int startX, int startY, int r, QImage img);
     static qreal regionAvg(int startX, int startY, int w, int h, QImage img);

@@ -191,75 +191,6 @@ qreal ImageProcessor::regionAvg(int startX, int startY, int w, int h, QImage img
 }
 
 
-void ImageProcessor::drawBezierDer(int p0x, int p0y, int p2x,
-                                     int p2y, int p1x, int p1y,
-                                   int stDev, QPainter *input) {
-    input->setPen(QColor(255,0,0));
-    QImage *imgInput = (QImage *) input->device();
-    input->setRenderHints(QPainter::Antialiasing);
-
-    float div = 1.0/ (imgInput->width() * 2);
-    for(float t = 0;t<1;t+= div) {
-        float onemt = 1-t;
-
-        float x = (onemt * onemt*p0x) +
-                (2 * onemt * t *p1x) +
-                (t * t *p2x);
-
-        float y = (onemt * onemt*p0y) +
-                (2 * onemt * t *p1y) +
-                (t * t *p2y);
-
-        float slopeX = (2*onemt*(p1x-p0x)) + (2*t*(p2x-p1x));
-        float slopeY = (2*onemt*(p1y-p0y)) + (2*t*(p2y-p1y));
-
-        float negInverse = -1 * slopeX / slopeY;
-
-        //first lets move in the positive direction
-        bool goOn = true; //go ooooooooooooooooooon
-
-        float lookAtX = x;
-        float lookAtY = y;
-
-        int paintToX =x;
-        int paintToY =y;
-
-        while(imgInput->valid(lookAtX +1,lookAtY + negInverse) && goOn) {
-            lookAtX++;
-            lookAtY += negInverse;
-            int newVal = qRed(imgInput->pixel(lookAtX,lookAtY));
-            if(newVal > stDev) {
-                paintToX = lookAtX;
-                paintToY = lookAtY;
-                goOn = false;
-            }
-        }
-
-        input->drawLine(x,y,paintToX,paintToY);
-
-        //now do it again for the negative direction
-        lookAtX = x;
-        lookAtY = y;
-
-        paintToX =x;
-        paintToY =y;
-        goOn = true;
-
-        while(imgInput->valid(lookAtX -1,lookAtY - negInverse) && goOn) {
-            lookAtX--;
-            lookAtY -= negInverse;
-            int newVal = qRed(imgInput->pixel(lookAtX,lookAtY));
-            if(newVal > stDev) {
-                paintToX = lookAtX;
-                paintToY = lookAtY;
-                goOn = false;
-            }
-        }
-
-        input->drawLine(x,y,paintToX,paintToY);
-
-    }
-}
 
 QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     QImage useMe = constrastImage(input,65);
@@ -292,6 +223,7 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     QVector<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
     QList<QVector<QPoint> > enamelGroups = groupPoints(proximalEnamel,input.width(),input.height(),3,3);
     //QList<QVector<QPoint> > embrasures = findEmbrasures(interProxGroups,points,outlines.first,outlines.second);
+    QList<QPoint> oddPoints = findOddPoints(enamelGroups,input);
 
 
 
@@ -325,16 +257,20 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 //        returnMe.append(addMe);
 //    }
 
-    int counter=0;
-    foreach(QVector<QPoint> group, enamelGroups) {
-        QColor addColor(QColor::colorNames().at(counter++));
-        addColor.setAlpha(150);
-        foreach(QPoint point, group) {
-            QPair<QPoint, QColor> addMe(point,addColor);
-            returnMe.append(addMe);
-        }
-    }
+//    int counter=0;
+//    foreach(QVector<QPoint> group, enamelGroups) {
+//        QColor addColor(QColor::colorNames().at(counter++));
+//        addColor.setAlpha(150);
+//        foreach(QPoint point, group) {
+//            QPair<QPoint, QColor> addMe(point,addColor);
+//            returnMe.append(addMe);
+//        }
+//    }
 
+    foreach(QPoint point, oddPoints) {
+        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
+        returnMe.append(addMe);
+    }
 
 //    counter=255;
 //    foreach(QVector<QPoint> group, embrasures) {
@@ -961,6 +897,32 @@ QVector<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
         }
 
     }
+    return returnMe;
+}
+
+QList<QPoint> ImageProcessor::findOddPoints(QList<QVector<QPoint> > enamelGroups, QImage input) {
+    QList<QPoint> returnMe;
+    foreach(QVector<QPoint> group, enamelGroups) {
+        int sum=0;
+        foreach(QPoint point, group) {
+            sum += qRed(input.pixel(point));
+        }
+        qreal average = ((qreal)sum) / group.count();
+
+        qreal variance =0;
+        foreach(QPoint point, group) {
+            int diff = qRed(input.pixel(point)) - average;
+            variance += pow(diff,2);
+        }
+        qreal deviation = sqrt( variance / group.count());
+        int cutOff = (int) qMax(0.0,average - (deviation * 2));
+        foreach(QPoint point, group) {
+            if(qRed(input.pixel(point)) <= cutOff) {
+                returnMe.append(point);
+            }
+        }
+    }
+
     return returnMe;
 }
 
