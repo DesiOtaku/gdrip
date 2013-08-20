@@ -178,6 +178,20 @@ void RadiographWidget::clearMarks() {
     m_CurveDistanceLineItems.clear();
 }
 
+void RadiographWidget::toggleMarks() {
+    foreach(QGraphicsLineItem *item, m_Marklines) {
+        item->setVisible(!item->isVisible());
+    }
+
+    foreach(QGraphicsRectItem *item, m_Markdots) {
+        item->setVisible(!item->isVisible());
+    }
+
+    foreach(QGraphicsLineItem *item,m_CurveDistanceLineItems) {
+        item->setVisible(!item->isVisible());
+    }
+}
+
 void RadiographWidget::setZoom(int newZoom) {
     float amount =  (newZoom/50.0);
     //m_PixItem->setScale(amount); //I have no clue why this moves the screen over center

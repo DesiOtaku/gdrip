@@ -50,6 +50,7 @@ public:
 
     void setImage(QImage img);
     void clearMarks();
+    void toggleMarks();
 
     //When doing the anaylsis, it would be nice to have this added in
     void addLine(QLine line, QColor color);

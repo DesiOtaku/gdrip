@@ -290,33 +290,7 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 }
 
 qreal ImageProcessor::findStdevArea(QImage input, QPoint center, int radius) {
-    QVector<int> localVals;
-    int xStart = qMax(0,center.x()-radius);
-    int xEnd = qMin(input.width()-1,center.x()+radius);
-
-    int yStart = qMax(0,center.y()-radius);
-    int yEnd = qMin(input.height()-1,center.y()+radius);
-
-    for(int scanX=xStart;scanX<=xEnd;scanX++) {
-        for(int scanY=yStart;scanY<=yEnd;scanY++) {
-            localVals.append(qRed(input.pixel(scanX,scanY)));
-        }
-    }
-
-    //Get the average
-    qreal sum=0;
-    foreach(int val, localVals) {
-        sum+=val;
-    }
-    qreal average = sum / localVals.count();
-
-
-    //Now to get the stDEV
-    qreal variance=0;
-    foreach(int val, localVals) {
-        variance += pow(average-val,2);
-    }
-    return sqrt( variance / localVals.count());
+    return findStdevArea(input,center,radius*2,radius*2);
 }
 
 qreal ImageProcessor::findStdevArea(QImage input, QPoint center, int width, int height) {
@@ -903,24 +877,36 @@ QVector<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
 QList<QPoint> ImageProcessor::findOddPoints(QList<QVector<QPoint> > enamelGroups, QImage input) {
     QList<QPoint> returnMe;
     foreach(QVector<QPoint> group, enamelGroups) {
-        int sum=0;
-        foreach(QPoint point, group) {
-            sum += qRed(input.pixel(point));
-        }
-        qreal average = ((qreal)sum) / group.count();
+        //returnMe.append(group.toList());
 
-        qreal variance =0;
         foreach(QPoint point, group) {
-            int diff = qRed(input.pixel(point)) - average;
-            variance += pow(diff,2);
-        }
-        qreal deviation = sqrt( variance / group.count());
-        int cutOff = (int) qMax(0.0,average - (deviation * 2));
-        foreach(QPoint point, group) {
-            if(qRed(input.pixel(point)) <= cutOff) {
+            qreal avg = regionAvg(point.x(),point.y(),5,input);
+            //qreal stDev = findStdevArea(input,point,5,5);
+            int value = qRed(input.pixel(point));
+            //int cutOff = (int) qMax(0.0,avg - (stDev * 1));
+            if(value < avg) {
                 returnMe.append(point);
             }
         }
+
+//        int sum=0;
+//        foreach(QPoint point, group) {
+//            sum += qRed(input.pixel(point));
+//        }
+//        qreal average = ((qreal)sum) / group.count();
+
+//        qreal variance =0;
+//        foreach(QPoint point, group) {
+//            int diff = qRed(input.pixel(point)) - average;
+//            variance += pow(diff,2);
+//        }
+//        qreal deviation = sqrt( variance / group.count());
+//        int cutOff = (int) qMax(0.0,average - (deviation * 1));
+//        foreach(QPoint point, group) {
+//            if(qRed(input.pixel(point)) < average) {
+//                returnMe.append(point);
+//            }
+//        }
     }
 
     return returnMe;

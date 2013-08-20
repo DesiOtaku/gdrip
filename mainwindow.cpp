@@ -60,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->radioImageWidget,SIGNAL(pixelValueHighlighted(int)),
             ui->histoWidget, SLOT(highlightValue(int)));
     connect(ui->histoWidget, SIGNAL(valueSelected(int)), this, SLOT(handleHistoSelectPoint(int)));
+    connect(ui->actionToggle_Marks, SIGNAL(toggled(bool)),this,SLOT(handleToggleMarks(bool)));
 
     QSettings settings("tshah", "gdrip");
     restoreState(settings.value("windowState").toByteArray());
@@ -191,4 +192,8 @@ void MainWindow::handleHistoSelectPoint(int valueSelected) {
         }
     }
 
+}
+
+void MainWindow::handleToggleMarks(bool showMarks) {
+    ui->radioImageWidget->toggleMarks();
 }

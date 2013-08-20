@@ -96,6 +96,7 @@
    <addaction name="separator"/>
    <addaction name="actionStart_Over"/>
    <addaction name="separator"/>
+   <addaction name="actionToggle_Marks"/>
    <addaction name="actionMirrorVer"/>
    <addaction name="actionMirror_Horizontally"/>
    <addaction name="actionInvert_Image"/>
@@ -677,6 +678,20 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionToggle_Marks">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="edit-select-all"/>
+   </property>
+   <property name="text">
+    <string>Toggle Marks</string>
    </property>
   </action>
  </widget>
