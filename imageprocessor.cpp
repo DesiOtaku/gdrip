@@ -19,6 +19,7 @@
 #include <QProgressDialog>
 #include <QDebug>
 #include <QTime>
+#include <qmath.h>
 
 #include "math.h"
 
@@ -134,6 +135,81 @@ QVector<QPoint> ImageProcessor::findOcculsionFaster(QImage input) {
 
 }
 
+qreal ImageProcessor::vectorSum(QImage input, QPoint start, int fakeangle) {
+    bool goOn = true;
+    QPoint currentPoint;
+    qreal returnMe =0.0;
+    int length=1;
+    qreal angle = (fakeangle/180.0) * M_PI;
+    while(goOn) {
+        int newX = (int)(start.x() + (length * qCos(angle) ));
+        int newY = (int)(start.y() + (length * qSin(angle) ));
+        currentPoint = QPoint(newX,newY);
+        if(input.valid(currentPoint)) {
+            //qreal value =  regionAvg(currentPoint.x(),currentPoint.y(),1,1,input);
+            qreal value =  qRed(input.pixel(currentPoint));
+            //qDebug()<<"Adding " <<(value/length);
+            returnMe += (value/sqrt(length));
+            //qDebug()<<"Return me is now " <<returnMe;
+            length++;
+        } else {
+            goOn = false;
+        }
+    }
+
+    return returnMe;
+}
+
+QVector<QPoint> ImageProcessor::findOcculsionSlower(QImage input) {
+    QVector<QPoint> returnMe;
+
+    int radius = (int) (.1 * input.height());
+    //qDebug()<<"radius: " <<radius;
+
+    //left side
+    int bestLeftY=0;
+    int bestLeftYval=INT_MAX;
+    for(int currentY=radius;currentY<input.height()-radius;currentY++) {
+        int sum =0;
+        foreach(int x,ImageProcessor::regionVals(0,currentY,radius,input)) {
+            sum+=x;
+        }
+
+        if(sum < bestLeftYval) {
+            bestLeftY = currentY;
+            bestLeftYval = sum;
+        }
+    }
+
+    QPoint currentPoint(0,bestLeftY);
+    returnMe.append(currentPoint);
+    for(int lookX =0;lookX<input.width();lookX++) {
+        qreal bestAngle=0;
+        qreal bestAngleValue=1024;
+        for(int angle=-89;angle<90;angle++) {
+            qreal angleValue = vectorSum(input,currentPoint,angle);
+            if(angleValue < bestAngleValue) {
+                bestAngle = angle;
+                bestAngleValue = angleValue;
+            }
+        }
+        qDebug()<<"Best angle was: " << bestAngle << " with "<< bestAngleValue;
+        if(bestAngle > 15) {
+            QPoint nextPoint(currentPoint.x() +1, currentPoint.y() +1);
+            currentPoint = nextPoint;
+        } else if(bestAngle < -15) {
+            QPoint nextPoint(currentPoint.x() +1, currentPoint.y() - 1);
+            currentPoint = nextPoint;
+        } else {
+            QPoint nextPoint(currentPoint.x() +1, currentPoint.y());
+            currentPoint = nextPoint;
+        }
+        returnMe.append(currentPoint);
+    }
+
+    return returnMe;
+}
+
 float ImageProcessor::calculateCenterValue(QImage input, int seeX, int seeY) {
     float returnMe =0;
 
@@ -218,29 +294,27 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     int cutoff = average + (5 * standardDev);
     QPair<QVector<QPoint>,QVector<QPoint> > outlines = ImageProcessor::findOutline(input,cutoff,points);
     QVector<QPoint> allOutlines = outlines.first + outlines.second;
-    QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
-    QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1);
-    QVector<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
-    QList<QVector<QPoint> > enamelGroups = groupPoints(proximalEnamel,input.width(),input.height(),3,3);
+    //QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
+    //QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1);
+    //QVector<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
+    //QList<QVector<QPoint> > enamelGroups = groupPoints(proximalEnamel,input.width(),input.height(),3,3);
     //QList<QVector<QPoint> > embrasures = findEmbrasures(interProxGroups,points,outlines.first,outlines.second);
-    QList<QPoint> oddPoints = findOddPoints(enamelGroups,input);
+    //QList<QPoint> oddPoints = findOddPoints(enamelGroups,input);
 
+    foreach(QPoint point, points) {
+        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
+        returnMe.append(addMe);
+    }
 
+    foreach(QPoint point, outlines.first) { //maxillary
+        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
+        returnMe.append(addMe);
+    }
 
-//    foreach(QPoint point, points) {
-//        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
-//        returnMe.append(addMe);
-//    }
-
-//    foreach(QPoint point, outlines.first) { //maxillary
-//        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
-//        returnMe.append(addMe);
-//    }
-
-//    foreach(QPoint point, outlines.second) { //manibular
-//        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
-//        returnMe.append(addMe);
-//    }
+    foreach(QPoint point, outlines.second) { //manibular
+        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
+        returnMe.append(addMe);
+    }
 
 //    int counter=255;
 //    foreach(QVector<QPoint> group, interProxGroups) {
@@ -267,10 +341,10 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 //        }
 //    }
 
-    foreach(QPoint point, oddPoints) {
-        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, oddPoints) {
+//        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
+//        returnMe.append(addMe);
+//    }
 
 //    counter=255;
 //    foreach(QVector<QPoint> group, embrasures) {

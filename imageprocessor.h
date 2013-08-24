@@ -57,6 +57,8 @@ private:
     static QImage thresholdImage(QImage input, int cutoff);
     static QVector<int> findOcculsion(QImage input);
     static QVector<QPoint> findOcculsionFaster(QImage input);
+    static qreal vectorSum(QImage input, QPoint start, int angle);
+    static QVector<QPoint> findOcculsionSlower(QImage input);
     static float calculateCenterValue(QImage input,int seeX,int seeY);
     static QVector<QLine> findEnamel(QImage input, QVector<QPoint> points, int cutOff);
     static QPair<QVector<QPoint>,QVector<QPoint> > findOutline(QImage input, int cutoff, QVector<QPoint> occlusion);
