@@ -30,6 +30,7 @@ HistoWidget::HistoWidget(QWidget *parent) :
     setMouseTracking(true);
     m_HighlightValue=0;
     m_SelectedValue =-1;
+    setAttribute( Qt::WA_TranslucentBackground, true );
 }
 
 /**

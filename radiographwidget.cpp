@@ -49,7 +49,8 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_LastRotate =0;
 
     QGraphicsScene *scene = new QGraphicsScene(this);
-    m_PixItem= new QGraphicsPixmapItem(0,scene);
+    m_PixItem= new QGraphicsPixmapItem(0);
+    scene->addItem(m_PixItem);
 
     this->setScene(scene);
     //this->setRenderHints(QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
@@ -65,27 +66,32 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     this->setDragMode(QGraphicsView::ScrollHandDrag);
 
     //Just making the distance line stuff ready so we can use it as soon as we are ready
-    m_CrossStartItem = new QGraphicsEllipseItem(-5,-5,10,10,0,scene);
+    m_CrossStartItem = new QGraphicsEllipseItem(-5,-5,10,10,0);
     m_CrossStartItem->setBrush(QBrush(Qt::blue));
     m_CrossStartItem->setVisible(false);
     m_CrossStartItem->setOpacity(0.6);
+    scene->addItem(m_CrossStartItem);
 
-    m_CrossEndItem = new QGraphicsEllipseItem(-5,-5,10,10,0,scene);
+    m_CrossEndItem = new QGraphicsEllipseItem(-5,-5,10,10,0);
     m_CrossEndItem->setBrush(QBrush(Qt::blue));
     m_CrossEndItem->setVisible(false);
     m_CrossEndItem->setOpacity(0.6);
+    scene->addItem(m_CrossEndItem);
 
 
-    m_CurveCrossStartItem  = new QGraphicsEllipseItem(-8,-8,10,10,0,scene);
+    m_CurveCrossStartItem  = new QGraphicsEllipseItem(-8,-8,10,10,0);
     m_CurveCrossStartItem->setBrush(QBrush(Qt::red));
     m_CurveCrossStartItem->setVisible(false);
     m_CurveCrossStartItem->setOpacity(0.6);
+    scene->addItem(m_CurveCrossStartItem);
 
-    m_DistanceLineItem = new QGraphicsLineItem(0,scene);
+    m_DistanceLineItem = new QGraphicsLineItem(0);
     m_DistanceLineItem->setVisible(false);
     m_DistanceLineItem->setPen(QPen(QBrush(QColor(0,0,255,100)),5,Qt::DotLine,Qt::RoundCap));
+    scene->addItem(m_DistanceLineItem);
 
-    m_DistanceTextItem = new QGraphicsTextItem(0,scene);
+
+    m_DistanceTextItem = new QGraphicsTextItem(0);
     m_DistanceTextItem->setVisible(false);
     m_DistanceTextItem->setPlainText("0.00");
     m_DistanceTextItem->setDefaultTextColor(QColor(0,0,255));
@@ -93,6 +99,7 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     defFont.setBold(true);
     defFont.setPointSize(12);
     m_DistanceTextItem->setFont(defFont);
+    scene->addItem(m_DistanceTextItem);
 
     QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
     shadow->setBlurRadius(50);
@@ -101,11 +108,12 @@ RadiographWidget::RadiographWidget(QWidget *parent) :
     m_DistanceTextItem->setGraphicsEffect(shadow);
 
     //m_CurveDistanceTextItem
-    m_CurveDistanceTextItem = new QGraphicsTextItem(0,scene);
+    m_CurveDistanceTextItem = new QGraphicsTextItem(0);
     m_CurveDistanceTextItem->setVisible(false);
     m_CurveDistanceTextItem->setPlainText("0.00");
     m_CurveDistanceTextItem->setDefaultTextColor(QColor(255,0,0));
     m_CurveDistanceTextItem->setFont(defFont);
+    scene->addItem(m_CurveDistanceTextItem);
 
     QGraphicsDropShadowEffect *shadow2 = new QGraphicsDropShadowEffect(this);
     shadow2->setBlurRadius(50);

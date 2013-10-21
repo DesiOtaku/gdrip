@@ -28,6 +28,8 @@
 #include <QUrl>
 #include <QSettings>
 #include <QFileInfo>
+#include <QGraphicsDropShadowEffect>
+
 
 #include "aboutdialog.h"
 #include "imageprocessor.h"
@@ -66,7 +68,14 @@ MainWindow::MainWindow(QWidget *parent) :
     restoreState(settings.value("windowState").toByteArray());
     restoreGeometry(settings.value("geometry").toByteArray());
 
+    ui->toolDock->setWindowFlags(Qt::FramelessWindowHint);
+    ui->toolDock->setAttribute(Qt::WA_TranslucentBackground);
+    ui->histoDock->setWindowFlags(Qt::FramelessWindowHint);
+    ui->histoDock->setAttribute(Qt::WA_TranslucentBackground);
+
     this->statusBar()->showMessage(tr("Ready"),3000);
+
+
 
 }
 

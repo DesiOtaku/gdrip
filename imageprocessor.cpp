@@ -16,7 +16,6 @@
  * along with gdrip.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************/
 
-#include <QProgressDialog>
 #include <QDebug>
 #include <QTime>
 #include <qmath.h>
@@ -294,27 +293,27 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     int cutoff = average + (5 * standardDev);
     QPair<QVector<QPoint>,QVector<QPoint> > outlines = ImageProcessor::findOutline(input,cutoff,points);
     QVector<QPoint> allOutlines = outlines.first + outlines.second;
-    //QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
-    //QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1);
-    //QVector<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
-    //QList<QVector<QPoint> > enamelGroups = groupPoints(proximalEnamel,input.width(),input.height(),3,3);
+    QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
+    QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1);
+    QVector<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
+    QList<QVector<QPoint> > enamelGroups = groupPoints(proximalEnamel,input.width(),input.height(),3,3);
     //QList<QVector<QPoint> > embrasures = findEmbrasures(interProxGroups,points,outlines.first,outlines.second);
     //QList<QPoint> oddPoints = findOddPoints(enamelGroups,input);
 
-    foreach(QPoint point, points) {
-        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, points) {
+//        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
+//        returnMe.append(addMe);
+//    }
 
-    foreach(QPoint point, outlines.first) { //maxillary
-        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, outlines.first) { //maxillary
+//        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
+//        returnMe.append(addMe);
+//    }
 
-    foreach(QPoint point, outlines.second) { //manibular
-        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
-        returnMe.append(addMe);
-    }
+//    foreach(QPoint point, outlines.second) { //manibular
+//        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
+//        returnMe.append(addMe);
+//    }
 
 //    int counter=255;
 //    foreach(QVector<QPoint> group, interProxGroups) {
@@ -331,15 +330,15 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 //        returnMe.append(addMe);
 //    }
 
-//    int counter=0;
-//    foreach(QVector<QPoint> group, enamelGroups) {
-//        QColor addColor(QColor::colorNames().at(counter++));
-//        addColor.setAlpha(150);
-//        foreach(QPoint point, group) {
-//            QPair<QPoint, QColor> addMe(point,addColor);
-//            returnMe.append(addMe);
-//        }
-//    }
+    int counter=0;
+    foreach(QVector<QPoint> group, enamelGroups) {
+        QColor addColor(QColor::colorNames().at(counter++));
+        addColor.setAlpha(150);
+        foreach(QPoint point, group) {
+            QPair<QPoint, QColor> addMe(point,addColor);
+            returnMe.append(addMe);
+        }
+    }
 
 //    foreach(QPoint point, oddPoints) {
 //        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
@@ -637,8 +636,6 @@ QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int 
     int counter=0;//same as "NextLabel"
 
     //First pass
-    QProgressDialog dia(tr("Doing Connectivity checks"),QString(),0,width*height);
-    dia.setWindowModality(Qt::WindowModal);
     for(int x=0;x<width;x++) { //yeah, its column then row, but it shouldn't matter
         for(int y=0;y<height;y++) {
             if(quickMap[x][y] != -1) { //if it is not background
@@ -671,11 +668,8 @@ QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int 
                     returnMe[lowest].append(currentPoint);
                 }
             }
-
-            dia.setValue(dia.value() +1);
         }
     }
-    dia.setValue(width*height);
 
     QList<QVector<QPoint> > realReturnMe;
 
