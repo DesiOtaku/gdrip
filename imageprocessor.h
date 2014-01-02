@@ -68,7 +68,7 @@ private:
     static QVector<QPoint> findSameY(QPoint needle, QVector<QPoint> haystack);
     static qreal calcVerticalConstrast(QImage input, QPoint center, int radius);
     static QVector<QPoint> findInterProximal(QImage input, QVector<QPoint> occPoints,QVector<QPoint> outlinePoints, int cutOff);
-    static QList<QVector<QPoint> > groupPoints(QVector<QPoint> points, int width, int height, int hozDiff, int verDiff);
+    static QList<QVector<QPoint> > groupPoints(QVector<QPoint> points, int width, int height, int hozDiff, int verDiff, int minSize);
     static QVector<QPoint> findValidNeighbors(QPoint point, int** quickMap, int width, int height, int hozJump, int verJump);
     static QList<QVector<QPoint> > findEmbrasures(QList<QVector<QPoint> > interProxGroups,
                                                   QVector<QPoint> occu, QVector<QPoint> maxOutline, QVector<QPoint> manOutline);
@@ -79,6 +79,8 @@ private:
     static qreal regionAvg(int startX, int startY, int w, int h, QImage img);
     static QPoint closestPoint(QPoint start, QVector<QPoint> ends);
     static QVector<QPoint> makeLine(QPoint start, QPoint end);
+    static QVector<QPoint> findCloseDecay(QList<QVector<QPoint> > interProxGroups, QImage input);
+    static QVector<float> findAverageAndStd(QVector<QPoint> values, QImage input);
 
 };
 

@@ -186,17 +186,20 @@ void RadiographWidget::clearMarks() {
     m_CurveDistanceLineItems.clear();
 }
 
-void RadiographWidget::toggleMarks() {
+void RadiographWidget::toggleMarks(bool showMarks) {
     foreach(QGraphicsLineItem *item, m_Marklines) {
-        item->setVisible(!item->isVisible());
+        //item->setVisible(!item->isVisible());
+        item->setVisible(showMarks);
     }
 
     foreach(QGraphicsRectItem *item, m_Markdots) {
-        item->setVisible(!item->isVisible());
+        //item->setVisible(!item->isVisible());
+        item->setVisible(showMarks);
     }
 
     foreach(QGraphicsLineItem *item,m_CurveDistanceLineItems) {
-        item->setVisible(!item->isVisible());
+        //item->setVisible(!item->isVisible());
+        item->setVisible(showMarks);
     }
 }
 

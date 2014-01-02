@@ -70,6 +70,7 @@ void HistoWidget::paintEvent(QPaintEvent *) {
     QPainter p(this);
     QColor histoColor(70,70,40,150);
     p.setPen(histoColor);
+    int startPoint = (this->width()-256)/2;
 
     for(int i=0;i<256;i++) {
         float fraction =  m_Occ.value(i);
@@ -77,14 +78,14 @@ void HistoWidget::paintEvent(QPaintEvent *) {
 
         if(i == m_HighlightValue) {
             p.setPen(QColor(255,70,40));
-            p.drawLine(i,this->height(),i,0);
+            p.drawLine(i+startPoint,this->height(),i+startPoint,0);
             p.setPen(histoColor);
         } if(i == m_SelectedValue) {
             p.setPen(QColor(40,70,255));
-            p.drawLine(i,this->height(),i,0);
+            p.drawLine(i+startPoint,this->height(),i+startPoint,0);
             p.setPen(histoColor);
         }
-        p.drawLine(i,this->height(),i,this->height()-length);
+        p.drawLine(i+startPoint,this->height(),i+startPoint,this->height()-length);
     }
 
 }
@@ -95,17 +96,19 @@ void HistoWidget::paintEvent(QPaintEvent *) {
  * @param event
  */
 void HistoWidget::mouseMoveEvent(QMouseEvent *event) {
+    int startPoint = (this->width()-256)/2;
     if(event->buttons() == Qt::LeftButton) {
-        m_SelectedValue = event->x();
-        emit valueSelected(event->x());
+        m_SelectedValue = event->x() - startPoint;
+        emit valueSelected(m_SelectedValue);
         this->repaint();
     }
-    this->setToolTip(QString::number(event->x()));
+    this->setToolTip(QString::number(event->x() - startPoint));
 }
 
 void HistoWidget::mousePressEvent(QMouseEvent *event) {
-    m_SelectedValue = event->x();
-    emit valueSelected(event->x());
+    int startPoint = (this->width()-256)/2;
+    m_SelectedValue = event->x() - startPoint;
+    emit valueSelected(m_SelectedValue);
     this->repaint();
 }
 

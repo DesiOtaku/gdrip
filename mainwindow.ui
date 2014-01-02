@@ -95,12 +95,12 @@
    <addaction name="actionStart_Over"/>
    <addaction name="separator"/>
    <addaction name="actionToggle_Marks"/>
+   <addaction name="actionFind_Teeth"/>
    <addaction name="actionMirrorVer"/>
    <addaction name="actionMirror_Horizontally"/>
    <addaction name="actionInvert_Image"/>
    <addaction name="actionEqualize_Histogram"/>
    <addaction name="actionStrech_Histogram"/>
-   <addaction name="actionFind_Teeth"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="histoDock">
@@ -115,11 +115,6 @@
      <width>274</width>
      <height>299</height>
     </size>
-   </property>
-   <property name="styleSheet">
-    <string notr="true"> QDockWidget::title {
-     background: rgba(255, 255, 255, 100);
- }</string>
    </property>
    <property name="floating">
     <bool>false</bool>
@@ -162,11 +157,7 @@
     </sizepolicy>
    </property>
    <property name="styleSheet">
-    <string notr="true"> QDockWidget::title {
-     background: rgba(255, 255, 255, 100);
- }
-
- QSlider::groove:vertical {
+    <string notr="true"> QSlider::groove:vertical {
 /*	background-color: rgb(255, 255, 255, 5);*/
 background-color:qlineargradient(spread:pad, x1:0.471, y1:1, x2:0.476, y2:0, stop:0 rgba(0, 0, 0, 150), stop:1 rgba(255, 255, 255, 150));
      position: absolute; /* absolutely position 4px from the left and right of the widget. setting margins on the widget should work too... */

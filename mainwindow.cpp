@@ -68,11 +68,6 @@ MainWindow::MainWindow(QWidget *parent) :
     restoreState(settings.value("windowState").toByteArray());
     restoreGeometry(settings.value("geometry").toByteArray());
 
-    ui->toolDock->setWindowFlags(Qt::FramelessWindowHint);
-    ui->toolDock->setAttribute(Qt::WA_TranslucentBackground);
-    ui->histoDock->setWindowFlags(Qt::FramelessWindowHint);
-    ui->histoDock->setAttribute(Qt::WA_TranslucentBackground);
-
     this->statusBar()->showMessage(tr("Ready"),3000);
 
 
@@ -204,5 +199,5 @@ void MainWindow::handleHistoSelectPoint(int valueSelected) {
 }
 
 void MainWindow::handleToggleMarks(bool showMarks) {
-    ui->radioImageWidget->toggleMarks();
+    ui->radioImageWidget->toggleMarks(showMarks);
 }

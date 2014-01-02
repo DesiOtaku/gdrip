@@ -29,6 +29,9 @@ ImageProcessor::ImageProcessor(QObject *parent) :
 {
 }
 
+
+//---------------Sane functions to use----------------------------------
+
 QImage ImageProcessor::equalizeHistogram(QImage input) {
     QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
     QPainter painter(&returnMe);
@@ -70,7 +73,75 @@ QVector<float> ImageProcessor::findOccurrences(QImage input, int offset) {
     return returnMe;
 }
 
+QImage ImageProcessor::invertImage(QImage input) {
+    QImage returnMe(input);
+    returnMe.invertPixels();
+    return returnMe;
+}
 
+
+QImage ImageProcessor::spreadHistogram(QImage input) {
+    //Really, this is normalization, http://en.wikipedia.org/wiki/Normalization_(image_processing)
+    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
+    QVector<float> occ = ImageProcessor::findOccurrences(input);
+    int lowest =0;
+    bool goOn = true;
+
+    for(int i=0;(i<occ.size()) && goOn;i++) {
+        if(occ.at(i) == 0.0) {
+            lowest = i;
+        } else {
+            goOn = false;
+        }
+    }
+
+    int highest = 255;
+    goOn =true;
+
+    for(int i=occ.size()-1;(i>0) && goOn;i--) {
+        if(occ.at(i) == 0.0) {
+            highest = i;
+        } else {
+            goOn = false;
+        }
+    }
+
+    int diff = highest - lowest;
+
+    for(int x=0;x<input.width();x++) {
+        for(int y=0;y<input.height();y++) {
+            int value = qRed(input.pixel(x,y));
+            int newValue =(int) ((value - lowest) * (255.0 / diff));
+            //TODO: faster way to fill those pixels
+            painter.fillRect(x,y,1,1,QColor(newValue,newValue,newValue));
+        }
+    }
+
+    return returnMe;
+}
+
+QImage ImageProcessor::constrastImage(QImage original, int amount) {
+    QImage returnMe(original.width(),original.height(),QImage::Format_ARGB32);
+    QPainter painter(&returnMe);
+
+    //Taken from Wikipedia / GIMP at http://en.wikipedia.org/wiki/Image_editing#Contrast_change_and_brightening
+    double frac = ((amount - 50)*2) / 100.0;
+    for(int x=0;x<original.width();x++) {
+        for(int y=0;y<original.height();y++) {
+            double value = (qRed(original.pixel(x,y)))/255.0;
+            double newVal = (value - 0.5) * (tan ((frac + 1) * 0.78539816339) ) + 0.5;
+            newVal = qMin(newVal*255,255.0);
+            newVal = qMax(newVal,0.0);
+            int setVal = (int)newVal;
+            painter.fillRect(x,y,1,1,QColor(setVal,setVal,setVal));
+        }
+    }
+
+    return returnMe;
+}
+
+//---------------Experimental functions start here----------------------------------
 
 QVector<QPoint> ImageProcessor::findOcculsionFaster(QImage input) {
     int radius = (int) (.1 * input.height());
@@ -238,17 +309,7 @@ QVector<int> ImageProcessor::regionVals(int startX, int startY, int r, QImage im
 }
 
 qreal ImageProcessor::regionAvg(int startX, int startY, int r, QImage img) {
-    qreal sum=0;
-    int counter=0;
-    for(int x= startX - r; x < (startX + r); x++) {
-        for(int y = startY-r; y< (startY+r); y++) {
-            if(img.valid(x,y)) {
-                sum +=qRed(img.pixel(x,y));
-                counter++;
-            }
-        }
-    }
-    return sum/counter;
+    return regionAvg(startX,startY,r,r,img);
 }
 
 qreal ImageProcessor::regionAvg(int startX, int startY, int w, int h, QImage img) {
@@ -265,99 +326,40 @@ qreal ImageProcessor::regionAvg(int startX, int startY, int w, int h, QImage img
     return sum/counter;
 }
 
-
-
 QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     QImage useMe = constrastImage(input,65);
     QVector<QPoint> points = ImageProcessor::findOcculsionFaster(useMe);
 
-    int sum=0;
-    foreach(QPoint point, points) {
-        sum += qRed(useMe.pixel(point));
-    }
-    int average = sum / points.count();
-    int variance =0;
-    foreach(QPoint point, points) {
-        int addMeSquare = qRed(useMe.pixel(point))  - average;
-        variance += (addMeSquare*addMeSquare);
-    }
-    double standardDev =sqrt(variance / points.count());
+    QVector<float> occValues = findAverageAndStd(points,input);
+    int average = (int) occValues.at(0);
+    float standardDev = occValues.at(1);
 
-
-    //QVector<QLine> lines = ImageProcessor::findEnamel(useMe,points, average + (5 * standardDev));
-    qDebug()<<"Average: "<< average;
-    qDebug()<<"StDev: "<< standardDev;
-
-    QVector<QPair<QPoint, QColor> > returnMe;
-
-    int cutoff = average + (5 * standardDev);
+    int cutoff = average + (0 * standardDev);
     QPair<QVector<QPoint>,QVector<QPoint> > outlines = ImageProcessor::findOutline(input,cutoff,points);
     QVector<QPoint> allOutlines = outlines.first + outlines.second;
     QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
-    QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1);
-    QVector<QPoint> proximalEnamel = findInterProximalEnamel(useMe, interProxGroups);
-    QList<QVector<QPoint> > enamelGroups = groupPoints(proximalEnamel,input.width(),input.height(),3,3);
-    //QList<QVector<QPoint> > embrasures = findEmbrasures(interProxGroups,points,outlines.first,outlines.second);
-    //QList<QPoint> oddPoints = findOddPoints(enamelGroups,input);
+    QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1,750);
+    QVector<QPoint> badEnamel = findCloseDecay(interProxGroups,input);
+    QList<QVector<QPoint> > groupedEnamel = groupPoints(badEnamel,input.width(),input.height(),2,2,100);
 
-//    foreach(QPoint point, points) {
-//        QPair<QPoint, QColor> addMe(point,QColor(255,0,0,150));
-//        returnMe.append(addMe);
-//    }
-
-//    foreach(QPoint point, outlines.first) { //maxillary
-//        QPair<QPoint, QColor> addMe(point,QColor(0,255,0,150));
-//        returnMe.append(addMe);
-//    }
-
-//    foreach(QPoint point, outlines.second) { //manibular
-//        QPair<QPoint, QColor> addMe(point,QColor(0,0,255,150));
-//        returnMe.append(addMe);
-//    }
-
-//    int counter=255;
-//    foreach(QVector<QPoint> group, interProxGroups) {
-//        QColor addColor(counter,counter/2,counter/3,150);
-//        counter-= 25;
-//        foreach(QPoint point, group) {
-//            QPair<QPoint, QColor> addMe(point,addColor);
-//            returnMe.append(addMe);
-//        }
-//    }
-
-//    foreach(QPoint point, proximalEnamel) {
-//        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
-//        returnMe.append(addMe);
-//    }
+    QVector<QPair<QPoint, QColor> > returnMe;
 
     int counter=0;
-    foreach(QVector<QPoint> group, enamelGroups) {
-        QColor addColor(QColor::colorNames().at(counter++));
-        addColor.setAlpha(150);
+    foreach(QVector<QPoint> group,  groupedEnamel) {
+        QColor useColor = QColor(QColor::colorNames().at(counter));
         foreach(QPoint point, group) {
-            QPair<QPoint, QColor> addMe(point,addColor);
+            QPair<QPoint, QColor> addMe(point,useColor);
             returnMe.append(addMe);
+
         }
+        counter++;
     }
 
-//    foreach(QPoint point, oddPoints) {
-//        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
+//    foreach(QPoint point, badEnamel) {
+//        QPair<QPoint, QColor> addMe(point,QColor(5,5,200,150));
 //        returnMe.append(addMe);
 //    }
 
-//    counter=255;
-//    foreach(QVector<QPoint> group, embrasures) {
-//        QColor addColor(counter/3,counter,counter,150);
-//        counter-= 25;
-//        foreach(QPoint point, group) {
-//            QPair<QPoint, QColor> addMe(point,addColor);
-//            returnMe.append(addMe);
-//        }
-//    }
-
-//    foreach(QVector<QPoint> group, interProxGroups) {
-//        qDebug()<<group.count();
-//    }
 
     return returnMe;
 }
@@ -423,12 +425,6 @@ qreal ImageProcessor::calcVerticalConstrast(QImage input, QPoint center, int rad
         }
     }
     return sum/count;
-}
-
-QImage ImageProcessor::invertImage(QImage input) {
-    QImage returnMe(input);
-    returnMe.invertPixels();
-    return returnMe;
 }
 
 QPair<QVector<QPoint>,QVector<QPoint> > ImageProcessor::findOutline(QImage input, int cutoff, QVector<QPoint> occlusion) {
@@ -574,9 +570,11 @@ QVector<QPoint> ImageProcessor::findSameY(QPoint needle, QVector<QPoint> haystac
 
 QVector<QPoint> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> occPoints, QVector<QPoint> outlinePoints, int cutOff){
     QVector<QPoint> returnMe;
-    QImage constrastedImg = constrastImage(input,70);
+    QImage constrastedImg = constrastImage(input,60);
+    int lowYCutoff = (int) (.05 * input.height());
+    int highYCutoff = (int) (.9 * input.height());
     for(int lookAtX=0;lookAtX<input.width();lookAtX++) {
-        for(int lookAtY=0;lookAtY<input.height();lookAtY++) {
+        for(int lookAtY=lowYCutoff;lookAtY<highYCutoff;lookAtY++) {
             int value = qRed(constrastedImg.pixel(lookAtX,lookAtY));
             if(value <= cutOff) {
                 QVector<QPoint> occSame = findSameX(QPoint(lookAtX,lookAtY),outlinePoints);
@@ -613,7 +611,7 @@ QVector<QPoint> ImageProcessor::findValidNeighbors(QPoint point, int **quickMap,
     return returnMe;
 }
 
-QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int width, int height, int hozDiff=1, int verDiff=1) {
+QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int width, int height, int hozDiff, int verDiff, int minSize) {
     //http://en.wikipedia.org/wiki/Connected-component_labeling
     QList<QVector<QPoint> > returnMe; //same as "linked"
     QVector<QPoint> emptySet;
@@ -674,8 +672,8 @@ QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int 
     QList<QVector<QPoint> > realReturnMe;
 
     foreach(QVector<QPoint> group, returnMe) {
-        if(group.count() > 750) { //more than 750 continous points
-            qDebug()<<group.count();
+        if(group.count() > minSize) { //more than 750 continous points
+            //qDebug()<<group.count();
             realReturnMe.append(group);
         }
     }
@@ -689,6 +687,120 @@ QList<QVector<QPoint> > ImageProcessor::groupPoints(QVector<QPoint> points, int 
     delete[] quickMap;
 
     return realReturnMe;
+}
+
+QVector<QPoint> ImageProcessor::findCloseDecay(QList<QVector<QPoint> > interProxGroups, QImage input) {
+    QVector<QPoint> returnMe;
+    int jumpAmount =2;
+    int counterLimit = input.width() / 50;
+    foreach(QVector<QPoint> group, interProxGroups) {
+        QVector<QPoint> leftPoints;
+        QVector<QPoint> rightPoints;
+        //first get the high and low bounds of the entire group
+        int highestY = -1;
+        int lowestY = INT_MAX;
+        foreach(QPoint point, group) {
+            if(point.y() > highestY) {
+                highestY = point.y();
+            }
+            if(point.y() < lowestY) {
+                lowestY = point.y();
+            }
+        }
+
+        for(int y=lowestY;y<=highestY;y++) {
+            QVector<QPoint> sameY = findSameY(QPoint(-1,y),group);
+            QPoint highestX =QPoint(-1,y);
+            QPoint lowestX = QPoint(INT_MAX,y);
+            foreach(QPoint point, sameY) {
+                if(point.x() > highestX.x()) {
+                    highestX = point;
+                }
+                if(point.x() < lowestX.x()) {
+                    lowestX = point;
+                }
+            }
+
+            leftPoints.append(QPoint(lowestX.x()-jumpAmount,lowestX.y()));
+            rightPoints.append(QPoint(highestX.x()+ jumpAmount,highestX.y()));
+        }
+
+        QVector<float> leftStats = findAverageAndStd(leftPoints,input);
+        QVector<float> rightStats = findAverageAndStd(rightPoints,input);
+
+        float leftCut = leftStats.at(0) ;
+        float rightCut = rightStats.at(0);
+
+        //now move away from the interproximal area
+        foreach(QPoint point, leftPoints) { //move left from interproximal
+            int value = qRed(input.pixel(point));
+            if(value < leftCut) {
+                returnMe.append(point);
+                bool goOn = true;
+                int stopAtMe = 2* value;
+                QPoint leftwardEye = point;
+                int counter=0;
+                while(goOn) {
+                    counter++;
+                    leftwardEye = QPoint(leftwardEye.x()-1,leftwardEye.y());
+                    qreal avg = regionAvg(leftwardEye.x(),leftwardEye.y(),2,input);
+                    if(input.valid(leftwardEye) && (avg < stopAtMe) && (counter<counterLimit)) {
+                        returnMe.append(leftwardEye);
+                    } else {
+                        goOn= false;
+                    }
+                }
+            }
+        }
+
+        foreach(QPoint point, rightPoints) { //move right from interproximal
+            int value = qRed(input.pixel(point));
+            if(value < rightCut) {
+                returnMe.append(point);
+                bool goOn = true;
+                int stopAtMe = 2* value;
+                QPoint rightwardEye = point;
+                int counter=0;
+                while(goOn) {
+                    counter++;
+                    rightwardEye = QPoint(rightwardEye.x()+1,rightwardEye.y());
+                    qreal avg = regionAvg(rightwardEye.x(),rightwardEye.y(),2,input);
+                    if(input.valid(rightwardEye) && (avg < stopAtMe) && (counter<counterLimit)) {
+                        returnMe.append(rightwardEye);
+                    } else {
+                        goOn= false;
+                    }
+                }
+            }
+        }
+    }
+
+    QVector<QPoint> realReturnMe;
+    foreach(QPoint point,returnMe) {
+        if(input.valid(point)) {
+            realReturnMe.append(point);
+        }
+    }
+
+    return realReturnMe;
+
+}
+
+QVector<float> ImageProcessor::findAverageAndStd(QVector<QPoint> values, QImage input) {
+    QVector<float> returnMe;
+    float sum=0;
+    float variance=0;
+    foreach(QPoint point, values) {
+        sum +=qRed(input.pixel(point));
+    }
+    float average = sum/values.count();
+    foreach(QPoint point, values) {
+        variance += pow(average-qRed(input.pixel(point)),2);
+    }
+
+    returnMe.append(average);
+    returnMe.append(sqrt(variance/values.count()));
+    return returnMe;
 }
 
 QPoint ImageProcessor::closestPoint(QPoint start, QVector<QPoint> ends) {
@@ -789,73 +901,6 @@ QList<QVector<QPoint> > ImageProcessor::findEmbrasures(QList<QVector<QPoint> > i
     return returnMe;
 
 }
-
-
-
-QImage ImageProcessor::constrastImage(QImage original, int amount) {
-    QImage returnMe(original.width(),original.height(),QImage::Format_ARGB32);
-    QPainter painter(&returnMe);
-
-
-    //Taken from Wikipedia / GIMP at http://en.wikipedia.org/wiki/Image_editing#Contrast_change_and_brightening
-    double frac = ((amount - 50)*2) / 100.0;
-    for(int x=0;x<original.width();x++) {
-        for(int y=0;y<original.height();y++) {
-            double value = (qRed(original.pixel(x,y)))/255.0;
-            double newVal = (value - 0.5) * (tan ((frac + 1) * 0.78539816339) ) + 0.5;
-            newVal = qMin(newVal*255,255.0);
-            newVal = qMax(newVal,0.0);
-            int setVal = (int)newVal;
-            painter.fillRect(x,y,1,1,QColor(setVal,setVal,setVal));
-        }
-    }
-
-
-    return returnMe;
-}
-
-
-QImage ImageProcessor::spreadHistogram(QImage input) {
-    //Really, this is normalization, http://en.wikipedia.org/wiki/Normalization_(image_processing)
-    QImage returnMe(input.width(),input.height(),QImage::Format_ARGB32);
-    QPainter painter(&returnMe);
-    QVector<float> occ = ImageProcessor::findOccurrences(input);
-    int lowest =0;
-    bool goOn = true;
-
-    for(int i=0;(i<occ.size()) && goOn;i++) {
-        if(occ.at(i) == 0.0) {
-            lowest = i;
-        } else {
-            goOn = false;
-        }
-    }
-
-    int highest = 255;
-    goOn =true;
-
-    for(int i=occ.size()-1;(i>0) && goOn;i--) {
-        if(occ.at(i) == 0.0) {
-            highest = i;
-        } else {
-            goOn = false;
-        }
-    }
-
-    int diff = highest - lowest;
-
-    for(int x=0;x<input.width();x++) {
-        for(int y=0;y<input.height();y++) {
-            int value = qRed(input.pixel(x,y));
-            int newValue =(int) ((value - lowest) * (255.0 / diff));
-            //TODO: faster way to fill those pixels
-            painter.fillRect(x,y,1,1,QColor(newValue,newValue,newValue));
-        }
-    }
-
-    return returnMe;
-}
-
 
 
 QVector<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
@@ -979,8 +1024,6 @@ QList<QPoint> ImageProcessor::findOddPoints(QList<QVector<QPoint> > enamelGroups
 
     return returnMe;
 }
-
-
 
 
 QVector<QVariant> ImageProcessor::findPulp(QImage input, QPoint startingPoint) {
