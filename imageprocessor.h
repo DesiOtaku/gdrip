@@ -45,6 +45,7 @@ public:
 
     //Quick helpers
     static QVector<float> findOccurrences(QImage input, int offset=0);
+    static QVector<QPoint> intersection(QVector<QPoint> a,QVector<QPoint> b);
 
     //Research functions
     static QImage drawOcculsion(QImage input);
@@ -60,7 +61,7 @@ private:
     static qreal vectorSum(QImage input, QPoint start, int angle);
     static QVector<QPoint> findOcculsionSlower(QImage input);
     static float calculateCenterValue(QImage input,int seeX,int seeY);
-    static QVector<QLine> findEnamel(QImage input, QVector<QPoint> points, int cutOff);
+
     static QPair<QVector<QPoint>,QVector<QPoint> > findOutline(QImage input, int cutoff, QVector<QPoint> occlusion);
     static qreal findStdevArea(QImage input, QPoint center, int radius);
     static qreal findStdevArea(QImage input, QPoint center, int width, int height);

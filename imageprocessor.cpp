@@ -141,6 +141,16 @@ QImage ImageProcessor::constrastImage(QImage original, int amount) {
     return returnMe;
 }
 
+QVector<QPoint> ImageProcessor::intersection(QVector<QPoint> a, QVector<QPoint> b) {
+    QVector<QPoint> returnMe;
+    foreach(QPoint check, a) {
+        if(b.contains(check)) {
+            returnMe.append(check);
+        }
+    }
+    return returnMe;
+}
+
 //---------------Experimental functions start here----------------------------------
 
 QVector<QPoint> ImageProcessor::findOcculsionFaster(QImage input) {
@@ -327,38 +337,55 @@ qreal ImageProcessor::regionAvg(int startX, int startY, int w, int h, QImage img
 }
 
 QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
+    QTime t;
+    t.start();
     QImage useMe = constrastImage(input,65);
     QVector<QPoint> points = ImageProcessor::findOcculsionFaster(useMe);
+    qDebug("1Time elapsed: %d ms", t.elapsed());
 
     QVector<float> occValues = findAverageAndStd(points,input);
     int average = (int) occValues.at(0);
     float standardDev = occValues.at(1);
+    qDebug("2Time elapsed: %d ms", t.elapsed());
 
     int cutoff = average + (0 * standardDev);
     QPair<QVector<QPoint>,QVector<QPoint> > outlines = ImageProcessor::findOutline(input,cutoff,points);
+    qDebug("3Time elapsed: %d ms", t.elapsed());
     QVector<QPoint> allOutlines = outlines.first + outlines.second;
+    qDebug("4Time elapsed: %d ms", t.elapsed());
     QVector<QPoint> inter = ImageProcessor::findInterProximal(input,points,allOutlines,cutoff);
+    qDebug("5Time elapsed: %d ms", t.elapsed());
     QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1,750);
-    QVector<QPoint> badEnamel = findCloseDecay(interProxGroups,input);
-    QList<QVector<QPoint> > groupedEnamel = groupPoints(badEnamel,input.width(),input.height(),2,2,100);
+    qDebug("6Time elapsed: %d ms", t.elapsed());
+
+    QVector<QPoint> enamelPoints = findInterProximalEnamel(input,interProxGroups);
+    qDebug("7Time elapsed: %d ms", t.elapsed());
+    QVector<QPoint> badTooth = findCloseDecay(interProxGroups,input);
+    qDebug("8Time elapsed: %d ms", t.elapsed());
+    QVector<QPoint> badEnamel = intersection(enamelPoints,badTooth);
+    qDebug("9Time elapsed: %d ms", t.elapsed());
+
+
+
+    //QList<QVector<QPoint> > groupedEnamel = groupPoints(badEnamel,input.width(),input.height(),2,2,10);
 
     QVector<QPair<QPoint, QColor> > returnMe;
 
-    int counter=0;
-    foreach(QVector<QPoint> group,  groupedEnamel) {
-        QColor useColor = QColor(QColor::colorNames().at(counter));
-        foreach(QPoint point, group) {
-            QPair<QPoint, QColor> addMe(point,useColor);
-            returnMe.append(addMe);
+//    int counter=0;
+//    foreach(QVector<QPoint> group,  interProxGroups) {
+//        //QColor useColor = QColor(QColor::colorNames().at(counter));
+//        foreach(QPoint point, group) {
+//            QPair<QPoint, QColor> addMe(point,QColor(5,200,5,150));
+//            returnMe.append(addMe);
 
-        }
-        counter++;
-    }
-
-//    foreach(QPoint point, badEnamel) {
-//        QPair<QPoint, QColor> addMe(point,QColor(5,5,200,150));
-//        returnMe.append(addMe);
+//        }
+//        counter++;
 //    }
+
+    foreach(QPoint point, badEnamel) {
+        QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
+        returnMe.append(addMe);
+    }
 
 
     return returnMe;
@@ -519,32 +546,6 @@ QPair<QVector<QPoint>,QVector<QPoint> > ImageProcessor::findOutline(QImage input
     }
 
     QPair<QVector<QPoint>,QVector<QPoint> > returnMe(maxPoints,manPoints);
-    return returnMe;
-}
-
-QVector<QLine> ImageProcessor::findEnamel(QImage input, QVector<QPoint> points, int cutOff) {
-    QVector<QLine> returnMe;
-    foreach(QPoint point, points) {
-        //first go up
-        bool moveOn = true;
-        for(int y=point.y();(y<input.height()) && moveOn;y++) {
-            //qDebug()<<qRed(input.pixel(point.x(),y));
-            if(qRed(input.pixel(point.x(),y)) > cutOff) {
-                moveOn = false;
-                returnMe.append(QLine(point,QPoint(point.x(),y)));
-            }
-        }
-
-        //now move down
-        moveOn = true;
-        for(int y=point.y();(y>0) && moveOn;y--) {
-            if(qRed(input.pixel(point.x(),y)) > cutOff) {
-                moveOn = false;
-                returnMe.append(QLine(point,QPoint(point.x(),y)));
-            }
-        }
-    }
-
     return returnMe;
 }
 
@@ -721,8 +722,16 @@ QVector<QPoint> ImageProcessor::findCloseDecay(QList<QVector<QPoint> > interProx
                 }
             }
 
-            leftPoints.append(QPoint(lowestX.x()-jumpAmount,lowestX.y()));
-            rightPoints.append(QPoint(highestX.x()+ jumpAmount,highestX.y()));
+            QPoint leftAdd = QPoint(lowestX.x()-jumpAmount,lowestX.y());
+            if(input.valid(leftAdd)) {
+                leftPoints.append(leftAdd);
+            }
+
+            QPoint rightAdd = QPoint(highestX.x()+ jumpAmount,highestX.y());
+            if(input.valid(rightAdd)) {
+                rightPoints.append(rightAdd);
+            }
+
         }
 
         QVector<float> leftStats = findAverageAndStd(leftPoints,input);

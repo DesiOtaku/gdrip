@@ -32,6 +32,10 @@ int main(int argc, char *argv[])
     if( (args.length() > 1) &&  QFile::exists(args.at(1))  ) {
         w.openImage(args.at(1));
     }
+
+    //For testing only
+    //w.openImage("/home/tshah/sampleRadio/BW Caries/DE 3.JPG");
+    //w.handleFindTeeth();
     
     return a.exec();
 }
