@@ -31,3 +31,6 @@ FORMS    += mainwindow.ui \
 
 RESOURCES += \
     icons.qrc
+
+QMAKE_CXXFLAGS += -fopenmp
+QMAKE_LFLAGS += -fopenmp

@@ -51,8 +51,6 @@ public slots:
     void handleStartOver();
     void handleSaveImage();
     void handleFindTeeth();
-    void handleFindPulp();
-    void handlePulpPointSelected(QPoint selectedPoint);
     void handleHistoSelectPoint(int valueSelected);
     void handleToggleMarks(bool showMarks);
     

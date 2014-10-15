@@ -122,19 +122,25 @@ QImage ImageProcessor::spreadHistogram(QImage input) {
 }
 
 QImage ImageProcessor::constrastImage(QImage original, int amount) {
-    QImage returnMe(original.width(),original.height(),QImage::Format_ARGB32);
-    QPainter painter(&returnMe);
+    QImage returnMe(original.width(),original.height(),QImage::Format_RGB32);
+    //QPainter painter(&returnMe);
+
 
     //Taken from Wikipedia / GIMP at http://en.wikipedia.org/wiki/Image_editing#Contrast_change_and_brightening
     double frac = ((amount - 50)*2) / 100.0;
+
+    #pragma omp parallel for
     for(int x=0;x<original.width();x++) {
         for(int y=0;y<original.height();y++) {
-            double value = (qRed(original.pixel(x,y)))/255.0;
-            double newVal = (value - 0.5) * (tan ((frac + 1) * 0.78539816339) ) + 0.5;
+            qreal value = (qRed(original.pixel(x,y)))/255.0;
+            qreal newVal = (value - 0.5) * (tan ((frac + 1) * 0.78539816339) ) + 0.5;
             newVal = qMin(newVal*255,255.0);
             newVal = qMax(newVal,0.0);
             int setVal = (int)newVal;
-            painter.fillRect(x,y,1,1,QColor(setVal,setVal,setVal));
+
+            //qDebug()<<"("<<x<<","<<y<<") is now "<<setVal;
+            //painter.fillRect(x,y,1,1,QColor(setVal,setVal,setVal));
+            returnMe.setPixel(x,y,qRgb(setVal,setVal,setVal));
         }
     }
 
@@ -160,6 +166,7 @@ QVector<QPoint> ImageProcessor::findOcculsionFaster(QImage input) {
     //left side
     int bestLeftY=0;
     int bestLeftYval=INT_MAX;
+
     for(int currentY=radius;currentY<input.height()-radius;currentY++) {
         int sum =0;
         foreach(int x,ImageProcessor::regionVals(0,currentY,radius,input)) {
@@ -175,6 +182,7 @@ QVector<QPoint> ImageProcessor::findOcculsionFaster(QImage input) {
     //right side
     int bestRightY=0;
     int bestRightYval=INT_MAX;
+
     for(int currentY=radius;currentY<input.height()-radius;currentY++) {
         int sum =0;
         foreach(int x,ImageProcessor::regionVals(input.width()-1,currentY,radius,input)) {
@@ -191,6 +199,7 @@ QVector<QPoint> ImageProcessor::findOcculsionFaster(QImage input) {
     int yPen = bestLeftY;
 
     QVector<QPoint> returnMe;
+
 
     for(int x=0;x<input.width();x++) { //go from left to right
         int diff = bestRightY - yPen;
@@ -358,7 +367,7 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
     QList<QVector<QPoint> > interProxGroups = groupPoints(inter,input.width(),input.height(),1,1,750);
     qDebug("6Time elapsed: %d ms", t.elapsed());
 
-    QVector<QPoint> enamelPoints = findInterProximalEnamel(input,interProxGroups);
+    QVector<QPoint> enamelPoints = findInterProximalEnamel(input,interProxGroups,points);
     qDebug("7Time elapsed: %d ms", t.elapsed());
     QVector<QPoint> badTooth = findCloseDecay(interProxGroups,input);
     qDebug("8Time elapsed: %d ms", t.elapsed());
@@ -371,16 +380,16 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 
     QVector<QPair<QPoint, QColor> > returnMe;
 
-//    int counter=0;
-//    foreach(QVector<QPoint> group,  interProxGroups) {
-//        //QColor useColor = QColor(QColor::colorNames().at(counter));
-//        foreach(QPoint point, group) {
-//            QPair<QPoint, QColor> addMe(point,QColor(5,200,5,150));
-//            returnMe.append(addMe);
+    int counter=0;
+    foreach(QVector<QPoint> group,  interProxGroups) {
+        //QColor useColor = QColor(QColor::colorNames().at(counter));
+        foreach(QPoint point, group) {
+            QPair<QPoint, QColor> addMe(point,QColor(5,200,5,50));
+            returnMe.append(addMe);
 
-//        }
-//        counter++;
-//    }
+        }
+        counter++;
+    }
 
     foreach(QPoint point, badEnamel) {
         QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
@@ -574,6 +583,7 @@ QVector<QPoint> ImageProcessor::findInterProximal(QImage input, QVector<QPoint> 
     QImage constrastedImg = constrastImage(input,60);
     int lowYCutoff = (int) (.05 * input.height());
     int highYCutoff = (int) (.9 * input.height());
+
     for(int lookAtX=0;lookAtX<input.width();lookAtX++) {
         for(int lookAtY=lowYCutoff;lookAtY<highYCutoff;lookAtY++) {
             int value = qRed(constrastedImg.pixel(lookAtX,lookAtY));
@@ -912,8 +922,7 @@ QList<QVector<QPoint> > ImageProcessor::findEmbrasures(QList<QVector<QPoint> > i
 }
 
 
-QVector<QPoint> ImageProcessor::findInterProximalEnamel(QImage input,
-                                                      QList<QVector<QPoint> > interProxGroups) {
+QVector<QPoint> ImageProcessor::findInterProximalEnamel(QImage input, QList<QVector<QPoint> > interProxGroups, QVector<QPoint> occPoints) {
     QVector<QPoint> returnMe;
     int starter = (int)(input.width() * 0.005);
     int ender = (int)(input.width() * 0.05);
@@ -1035,74 +1044,3 @@ QList<QPoint> ImageProcessor::findOddPoints(QList<QVector<QPoint> > enamelGroups
 }
 
 
-QVector<QVariant> ImageProcessor::findPulp(QImage input, QPoint startingPoint) {
-    QVector<QVariant> returnMe;
-    int endRad = 100;
-    int segmentSize =5;
-    int segLeft = segmentSize/-2;
-    qreal pi = 3.14159265;
-
-
-    for(qreal rads=0;rads < (2*pi);rads += .01) {
-        int stageStatus =0; //each stage is changed in each major pixel value change
-        //qreal radians = (deg* 3.14159265)/180;
-        qreal radians = rads;
-        QVector<qreal> segmentVariances;
-        qreal maxVariance=0;
-        qreal maxVarianceR =0;
-        for(int r=1;r<endRad;r++) {
-            //qreal xPoint = startingPoint.x() + (r * cos(radians));
-            //qreal yPoint = startingPoint.y() + (r * sin(radians));
-            //QPoint currentPoint((int)xPoint,(int)yPoint); //TODO: bilinear interpolation
-            //now figure out the segment variance value
-            //QVector<int> values;
-            qreal weighSum =0;
-            for(int m=r;m<=r+segmentSize;m++) {
-                qreal xCheck = startingPoint.x() + (m * cos(radians));
-                qreal yCheck = startingPoint.y() + (m * sin(radians));
-                QPoint lookAt((int)xCheck,(int)yCheck);
-                if(input.valid(lookAt)) {
-                    int val = qRed(input.pixel(lookAt));
-                    weighSum += pow(segLeft + (m-r),3)*val;
-                } else {
-                    m=r+segmentSize;
-                    weighSum =0;
-                }
-            }
-            weighSum = qAbs(weighSum);
-            if(weighSum > maxVariance) {
-                maxVariance = weighSum;
-                maxVarianceR = r;
-            }
-
-//            if(maxVariance > 10) {
-//                qDebug()<<"Winner was: " << maxVariance;
-//                //int m = r + (segmentSize/2);
-//                int m = maxVarianceR + (segmentSize/2);
-//                qreal xCheck = startingPoint.x() + (m * cos(radians));
-//                qreal yCheck = startingPoint.y() + (m * sin(radians));
-//                returnMe.append(QPoint((int)xCheck,(int)yCheck));
-//                //r = endRad;
-//            }
-        }
-        qDebug()<<"Winner was: " << maxVariance;
-        if(maxVariance > 4000) {
-            qDebug()<<"Winner was: " << maxVariance;
-            //int m = r + (segmentSize/2);
-            int m = maxVarianceR + (segmentSize/2);
-            qreal xCheck = startingPoint.x() + (m * cos(radians));
-            qreal yCheck = startingPoint.y() + (m * sin(radians));
-            returnMe.append(QPoint((int)xCheck,(int)yCheck));
-            //r = endRad;
-        }
-
-//        for(int m=maxVarianceR;m<=(maxVarianceR+segmentSize);m++) {
-//            qreal xCheck = startingPoint.x() + (m * cos(radians));
-//            qreal yCheck = startingPoint.y() + (m * sin(radians));
-//            returnMe.append(QPoint((int)xCheck,(int)yCheck));
-//        }
-    }
-
-    return returnMe;
-
-}

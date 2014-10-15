@@ -54,8 +54,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionInvert_Image,SIGNAL(triggered()), ui->radioImageWidget,SLOT(invertImg()));
     connect(ui->actionStrech_Histogram,SIGNAL(triggered()),ui->radioImageWidget,SLOT(strechHisto()));
     connect(ui->radioImageWidget,SIGNAL(messageUpdate(QString,int)),this->statusBar(),SLOT(showMessage(QString,int)));
-    connect(ui->actionFind_Pulp,SIGNAL(triggered()),this,SLOT(handleFindPulp()));
-    connect(ui->radioImageWidget,SIGNAL(pointSelected(QPoint)),this,SLOT(handlePulpPointSelected(QPoint)));
 
     connect(ui->radioImageWidget,SIGNAL(newHistogram(QVector<float>)),
             ui->histoWidget, SLOT(setHistogram(QVector<float>)));
@@ -162,27 +160,6 @@ void MainWindow::handleFindTeeth() {
     }
     this->statusBar()->showMessage(tr("Drawing Teeth"),3000);
 }
-
-void MainWindow::handleFindPulp() {
-    this->statusBar()->showMessage(tr("Please select a point"),3000);
-    ui->radioImageWidget->selectPoint();
-    //At some point, radiographwidget is going to call handlePulpPointSelected()
-}
-
-void MainWindow::handlePulpPointSelected(QPoint selectedPoint) {
-    this->statusBar()->showMessage(tr("Finding pulp"),3000);
-    QVector<QVariant> drawMe = ImageProcessor::findPulp(ui->radioImageWidget->getOriginalImage(),selectedPoint);
-    this->statusBar()->showMessage(tr("Found pulp"),3000);
-    foreach(QVariant var, drawMe) {
-        if(var.type() == QVariant::Line) {
-            ui->radioImageWidget->addLine(var.toLine(),QColor(255,0,0,100));
-        } else if(var.type() == QVariant::Point) {
-            ui->radioImageWidget->addDot(var.toPoint(),QColor(255,0,0,100));
-        }
-    }
-    this->statusBar()->showMessage(tr("Drawing the pulp"),3000);
-}
-
 
 void MainWindow::handleHistoSelectPoint(int valueSelected) {
     ui->radioImageWidget->clearMarks();

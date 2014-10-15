@@ -51,7 +51,6 @@ public:
     static QImage drawOcculsion(QImage input);
     static QImage findBackground(QImage input);
     static QVector<QPair<QPoint, QColor> > findTeeth(QImage input);
-    static QVector<QVariant> findPulp(QImage input, QPoint startingPoint);
 
     
 private:
@@ -73,7 +72,7 @@ private:
     static QVector<QPoint> findValidNeighbors(QPoint point, int** quickMap, int width, int height, int hozJump, int verJump);
     static QList<QVector<QPoint> > findEmbrasures(QList<QVector<QPoint> > interProxGroups,
                                                   QVector<QPoint> occu, QVector<QPoint> maxOutline, QVector<QPoint> manOutline);
-    static QVector<QPoint> findInterProximalEnamel(QImage input, QList<QVector<QPoint> > interProxGroups);
+    static QVector<QPoint> findInterProximalEnamel(QImage input, QList<QVector<QPoint> > interProxGroups, QVector<QPoint> occPoints);
     static QList<QPoint> findOddPoints(QList<QVector<QPoint> > enamelGroups, QImage input);
     static QVector<int> regionVals(int startX, int startY, int r, QImage img);
     static qreal regionAvg(int startX, int startY, int r, QImage img);

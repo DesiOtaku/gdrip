@@ -611,14 +611,6 @@ background-color:qlineargradient(spread:pad, x1:0.471, y1:1, x2:0.476, y2:0, sto
     <string>Use the mouse to measure</string>
    </property>
   </action>
-  <action name="actionFind_Pulp">
-   <property name="text">
-    <string>Find Pulp</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+P</string>
-   </property>
-  </action>
   <action name="actionToggle_Marks">
    <property name="checkable">
     <bool>true</bool>
