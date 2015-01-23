@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1024</width>
+    <width>1133</width>
     <height>768</height>
    </rect>
   </property>
@@ -32,7 +32,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1024</width>
+     <width>1133</width>
      <height>20</height>
     </rect>
    </property>
@@ -96,6 +96,7 @@
    <addaction name="separator"/>
    <addaction name="actionToggle_Marks"/>
    <addaction name="actionFind_Teeth"/>
+   <addaction name="actionFind_Caries_Reverse"/>
    <addaction name="actionMirrorVer"/>
    <addaction name="actionMirror_Horizontally"/>
    <addaction name="actionInvert_Image"/>
@@ -625,6 +626,14 @@ background-color:qlineargradient(spread:pad, x1:0.471, y1:1, x2:0.476, y2:0, sto
    </property>
    <property name="text">
     <string>Toggle Marks</string>
+   </property>
+  </action>
+  <action name="actionFind_Caries_Reverse">
+   <property name="icon">
+    <iconset theme="edit-find"/>
+   </property>
+   <property name="text">
+    <string>Find Caries Reverse</string>
    </property>
   </action>
  </widget>

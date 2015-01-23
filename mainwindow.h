@@ -51,6 +51,7 @@ public slots:
     void handleStartOver();
     void handleSaveImage();
     void handleFindTeeth();
+    void handleFindTeethReverse();
     void handleHistoSelectPoint(int valueSelected);
     void handleToggleMarks(bool showMarks);
     

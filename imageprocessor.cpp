@@ -380,16 +380,26 @@ QVector<QPair<QPoint, QColor> > ImageProcessor::findTeeth(QImage input) {
 
     QVector<QPair<QPoint, QColor> > returnMe;
 
-    int counter=0;
-    foreach(QVector<QPoint> group,  interProxGroups) {
-        //QColor useColor = QColor(QColor::colorNames().at(counter));
-        foreach(QPoint point, group) {
-            QPair<QPoint, QColor> addMe(point,QColor(5,200,5,50));
-            returnMe.append(addMe);
-
-        }
-        counter++;
+    foreach(QPoint point ,points) {
+        QPair<QPoint, QColor> addMe(point,QColor(0,200,0,150));
+        returnMe.append(addMe);
     }
+
+    foreach(QPoint point ,allOutlines) {
+        QPair<QPoint, QColor> addMe(point,QColor(200,115,115,150));
+        returnMe.append(addMe);
+    }
+
+//    int counter=0;
+//    foreach(QVector<QPoint> group,  interProxGroups) {
+//        //QColor useColor = QColor(QColor::colorNames().at(counter));
+//        foreach(QPoint point, group) {
+//            QPair<QPoint, QColor> addMe(point,QColor(5,200,5,50));
+//            returnMe.append(addMe);
+
+//        }
+//        counter++;
+//    }
 
     foreach(QPoint point, badEnamel) {
         QPair<QPoint, QColor> addMe(point,QColor(200,5,5,150));
@@ -467,7 +477,7 @@ QPair<QVector<QPoint>,QVector<QPoint> > ImageProcessor::findOutline(QImage input
     //int radius = (int) (.0001 * input.width()*input.height());
     int radius = 25;
     //int radius = 50;
-    QImage constrastedImg = constrastImage(input,55);
+    QImage constrastedImg = constrastImage(input,65);
     int offSetAmount = 10;
     int pastOccAllowance = 5;
 
@@ -483,12 +493,15 @@ QPair<QVector<QPoint>,QVector<QPoint> > ImageProcessor::findOutline(QImage input
     for(int currentY=radius;currentY<leftOcc.y();currentY++) {
         //Scan the area
         qreal stDev = calcVerticalConstrast(constrastedImg,QPoint(0,currentY),radius);
+        //qDebug()<<"stDev: " <<stDev;
 
         if(stDev > highestStDev) {
             bestStartY = currentY;
             highestStDev = stDev;
         }
     }
+
+    qDebug()<<"Best start: " <<bestStartY;
 
     maxPoints.append(QPoint(0,bestStartY));
     int currentY = bestStartY;

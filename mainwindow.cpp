@@ -61,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->histoWidget, SLOT(highlightValue(int)));
     connect(ui->histoWidget, SIGNAL(valueSelected(int)), this, SLOT(handleHistoSelectPoint(int)));
     connect(ui->actionToggle_Marks, SIGNAL(toggled(bool)),this,SLOT(handleToggleMarks(bool)));
+    connect(ui->actionFind_Caries_Reverse,SIGNAL(triggered()),this,SLOT(handleFindTeethReverse()));
 
     QSettings settings("tshah", "gdrip");
     restoreState(settings.value("windowState").toByteArray());
@@ -106,6 +107,7 @@ void MainWindow::openImage(QString fileName) {
     ui->radioImageWidget->setImage(startImg);
     this->setWindowFilePath(fileName);
     this->statusBar()->showMessage(tr("Image \"%1\" has been opened").arg(fileName),3000);
+    handleFindTeeth();
 }
 
 void MainWindow::openImage() {
@@ -153,6 +155,24 @@ void MainWindow::handleSaveImage() {
 void MainWindow::handleFindTeeth() {
     this->statusBar()->showMessage(tr("Finding Teeth"),3000);
     QVector<QPair<QPoint, QColor> > drawMe = ImageProcessor::findTeeth(ui->radioImageWidget->getOriginalImage());
+    ui->radioImageWidget->clearMarks();
+    this->statusBar()->showMessage(tr("Found Teeth"),3000);
+    for(int i=0;i<drawMe.count();i++) { //can't use foreach because C++ macros suck and the compiler will only complain about it
+        QPair<QPoint, QColor> item = drawMe.at(i);
+        ui->radioImageWidget->addDot(item.first,item.second);
+    }
+    this->statusBar()->showMessage(tr("Drawing Teeth"),3000);
+}
+
+void MainWindow::handleFindTeethReverse() {
+
+    QImage img = ui->radioImageWidget->getOriginalImage().mirrored(true,false);
+
+    ui->radioImageWidget->mirrorH();
+
+    this->statusBar()->showMessage(tr("Finding Teeth"),3000);
+    QVector<QPair<QPoint, QColor> > drawMe = ImageProcessor::findTeeth(img);
+    ui->radioImageWidget->clearMarks();
     this->statusBar()->showMessage(tr("Found Teeth"),3000);
     for(int i=0;i<drawMe.count();i++) { //can't use foreach because C++ macros suck and the compiler will only complain about it
         QPair<QPoint, QColor> item = drawMe.at(i);
